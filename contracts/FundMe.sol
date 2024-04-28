@@ -2,7 +2,6 @@
 
 pragma solidity >=0.8.2 <0.9.0;
 import "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
-
 import "./PriceLibrary.sol";
 
 contract FundMe {

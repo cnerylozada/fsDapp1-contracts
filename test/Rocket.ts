@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ignition } from "hardhat";
 import RocketModule from "../ignition/modules/Rocket/contract";
 
-describe("Apollo", function () {
+describe("testing Rocket Contract", function () {
   const deployRocketContract = async (args: { name: string }) => {
     const { rocketContract } = await ignition.deploy(RocketModule, {
       parameters: {
