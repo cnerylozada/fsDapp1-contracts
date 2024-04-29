@@ -8,7 +8,7 @@ describe("testing Rocket Contract", function () {
     return { fundMe, mockDataFeed };
   };
 
-  it("should ", async () => {
+  it("should set dataFeed value correctly", async () => {
     const { fundMe, mockDataFeed } = await deployRocketContract();
     const dataFeed = await fundMe.dataFeed();
     expect(dataFeed).to.eq(mockDataFeed);
