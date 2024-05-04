@@ -1,16 +1,44 @@
 import { expect } from "chai";
-import { ignition } from "hardhat";
+import { ignition, ethers } from "hardhat";
 import FundMeModule from "../ignition/modules/FundMe/contracts/fundMe";
+import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 
-describe("testing Rocket Contract", function () {
-  const deployRocketContract = async () => {
+describe("testing FundMe Contract", function () {
+  const deployContract = async () => {
+    const [deployer, otherAccount] = await ethers.getSigners();
     const { fundMe, mockDataFeed } = await ignition.deploy(FundMeModule);
-    return { fundMe, mockDataFeed };
+    return { fundMe, mockDataFeed, deployer, otherAccount };
   };
 
   it("should set dataFeed value correctly", async () => {
-    const { fundMe, mockDataFeed } = await deployRocketContract();
+    const { fundMe, mockDataFeed } = await loadFixture(deployContract);
     const dataFeed = await fundMe.dataFeed();
     expect(dataFeed).to.eq(mockDataFeed);
+  });
+
+  it("should fail if there was not enough funds sent", async () => {
+    const { fundMe } = await loadFixture(deployContract);
+    await expect(fundMe.fund()).to.revertedWith("Dint send you enough");
+  });
+
+  it("should store funds from funders", async () => {
+    const { fundMe, otherAccount } = await loadFixture(deployContract);
+    const amountSent = ethers.parseEther("1");
+    await fundMe.connect(otherAccount).fund({ value: amountSent });
+
+    const amountReceived = await fundMe.addressToAmountFunded(
+      otherAccount.address
+    );
+    expect(amountSent.toString()).to.be.eq(amountReceived.toString());
+  });
+
+  it("should store funder address after fund", async () => {
+    const { fundMe, otherAccount } = await loadFixture(deployContract);
+    const amountSent = ethers.parseEther("1");
+    await fundMe.connect(otherAccount).fund({ value: amountSent });
+
+    const firstFunderIndex = 0;
+    const funderAddress = await fundMe.funders(firstFunderIndex);
+    expect(funderAddress).to.be.eq(otherAccount.address);
   });
 });
