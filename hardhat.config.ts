@@ -5,7 +5,6 @@ dotenv.config();
 
 const ALCHEMY_SEPOLIA_APIKEY = process.env.ALCHEMY_SEPOLIA_APIKEY;
 const SEPOLIA_PRIVATEKEY = process.env.SEPOLIA_PRIVATEKEY!;
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 const COINMARKET_API_KEY = process.env.COINMARKET_API_KEY;
 
 const config: HardhatUserConfig = {
@@ -22,8 +21,8 @@ const config: HardhatUserConfig = {
       chainId: 11155111,
     },
   },
-  etherscan: {
-    apiKey: ETHERSCAN_API_KEY,
+  ignition: {
+    requiredConfirmations: 3,
   },
 };
 

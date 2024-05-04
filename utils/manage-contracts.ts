@@ -1,6 +1,6 @@
-import { ethers, run } from "hardhat";
+import { run } from "hardhat";
 
-export const verify = async (contractAddress: string, args: any[]) => {
+export const verify = async (contractAddress: any, args: any[]) => {
   console.log("Verifying contract...");
   try {
     await run("verify:verify", {

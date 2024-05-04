@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 import "hardhat/console.sol";
 
-// Author: @lucciano_muppetx
+// Author: @cnerylozada_comegalletas
 contract Greeter {
     string private greeting;
 

@@ -8,8 +8,5 @@ export default buildModule("Greeter", (m) => {
   const greeterContract = m.contract("Greeter", [contractArgs._greeting], {
     from: mainSepoliaAccount,
   });
-  if (process.env.ALCHEMY_SEPOLIA_APIKEY) {
-    console.log("deploying to sepolia network...");
-  }
   return { greeterContract };
 });
