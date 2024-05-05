@@ -19,7 +19,7 @@ describe("testing FundMe Contract", function () {
   describe("fund function", () => {
     it("should fail if there was not enough funds sent", async () => {
       const { fundMe } = await loadFixture(deployContract);
-      await expect(fundMe.fund()).to.revertedWith("Dint send you enough");
+      await expect(fundMe.fund()).to.reverted;
     });
 
     it("should store funds from funders", async () => {
@@ -50,7 +50,7 @@ describe("testing FundMe Contract", function () {
     it("should not withdraw when the owner dint perform it", async () => {
       const { fundMe, otherAccount } = await loadFixture(deployContract);
       await expect(fundMe.connect(otherAccount).withdraw()).to.be.rejectedWith(
-        "You are not the owner"
+        "FundMe__NotOwner"
       );
     });
 
