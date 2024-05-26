@@ -22,9 +22,9 @@ const config: HardhatUserConfig = {
       chainId: 11155111,
     },
   },
-  ignition: {
-    requiredConfirmations: 3,
-  },
+  // ignition: {
+  //   requiredConfirmations: 3,
+  // },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
   },

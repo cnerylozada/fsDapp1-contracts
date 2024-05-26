@@ -8,6 +8,7 @@ export default buildModule("FundMe", (m) => {
   const chainId = network.config.chainId!;
   const { mockDataFeed } = m.useModule(MockDataFeed);
   if (chainId === localhostChainId) {
+    console.log("deploy FundMe locally....");
     const _priceFeedAddress = mockDataFeed;
     const fundMe = m.contract("FundMe", [_priceFeedAddress]);
     return { fundMe, mockDataFeed };
