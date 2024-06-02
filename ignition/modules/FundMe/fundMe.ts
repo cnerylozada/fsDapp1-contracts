@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import MockDataFeed from "./mockDataFeed";
 import { network } from "hardhat";
 import { localhostChainId } from "../../../utils/utils";
-import { contractAddresses } from "../../../utils/chainlink";
+import { chainlinkContractAddresses } from "../../../utils/fundMe";
 
 export default buildModule("FundMe", (m) => {
   const chainId = network.config.chainId!;
@@ -13,7 +13,7 @@ export default buildModule("FundMe", (m) => {
     const fundMe = m.contract("FundMe", [_priceFeedAddress]);
     return { fundMe, mockDataFeed };
   }
-  const _priceFeedAddress = contractAddresses.find((_) => _.chainId)
+  const _priceFeedAddress = chainlinkContractAddresses.find((_) => _.chainId)
     ?.ethUsdPriceFeed!;
   const fundMe = m.contract("FundMe", [_priceFeedAddress]);
   return { fundMe, mockDataFeed };
