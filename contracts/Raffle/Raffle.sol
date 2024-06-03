@@ -15,7 +15,7 @@ error Raffle__MaxNumParticipants();
 contract Raffle is VRFConsumerBaseV2Plus {
     uint16 private immutable REQUEST_CONFIRMATIONS = 3;
     uint32 private immutable NUM_WORDS = 1;
-    uint public immutable MAX_NUM_PARTICIPANTS = 5;
+    uint public immutable MAX_NUM_PARTICIPANTS = 7;
 
     uint256 public s_subscriptionId;
     bytes32 private s_keyHash;
