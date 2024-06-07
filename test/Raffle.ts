@@ -5,9 +5,9 @@ import RaffleModule from "../ignition/modules/Raffle/raffle";
 
 describe("testing Raffle contract", () => {
   async function deployRaffleModuleFixture() {
-    const [deployer, anotherDeployer] = await ethers.getSigners();
+    const [deployer, anotherDeployer, customerOne] = await ethers.getSigners();
     const { raffleContract } = await ignition.deploy(RaffleModule);
-    return { raffleContract, deployer, anotherDeployer };
+    return { raffleContract, deployer, anotherDeployer, customerOne };
   }
 
   describe("about storing during raffle creation", async () => {
@@ -82,6 +82,28 @@ describe("testing Raffle contract", () => {
       ).to.be.revertedWithCustomError(
         raffleContract,
         "Raffle__RandomNotCalled"
+      );
+    });
+  });
+
+  describe("about looking for the wiinner", async () => {
+    it("should return an error when the election is in progress", async () => {
+      const { raffleContract, anotherDeployer } = await loadFixture(
+        deployRaffleModuleFixture
+      );
+      await raffleContract.createRaffle();
+      const raffleId = 0;
+      await raffleContract.addNewParticipantByRaffleId(raffleId);
+      await raffleContract
+        .connect(anotherDeployer)
+        .addNewParticipantByRaffleId(raffleId);
+      await raffleContract.startRaffleById(raffleId);
+
+      await expect(
+        raffleContract.getWinnerByRaffleId(0)
+      ).to.be.revertedWithCustomError(
+        raffleContract,
+        "Raffle__RandomInProgress"
       );
     });
   });
