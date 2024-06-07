@@ -9,7 +9,7 @@ describe("testing Raffle contract", () => {
     const { raffleContract } = await ignition.deploy(RaffleModule);
     return { raffleContract, deployer, anotherDeployer };
   }
-  describe("default state", () => {
+  describe("...", () => {
     it("should store raffle creator address", async () => {
       const { raffleContract, deployer } = await loadFixture(
         deployRaffleModuleFixture
@@ -17,6 +17,13 @@ describe("testing Raffle contract", () => {
       await raffleContract.createRaffle();
       const owner = await raffleContract.s_ownersByRaffleId(0);
       expect(owner).to.eql(deployer.address);
+    });
+
+    it("should trigger error when try to add participants in a no existing raffle", async () => {
+      const { raffleContract } = await loadFixture(deployRaffleModuleFixture);
+      await expect(
+        raffleContract.addNewParticipantByRaffleId(99)
+      ).to.be.revertedWithCustomError(raffleContract, "Raffle__NoCreated");
     });
 
     // it("should store participants in raffle already created", async () => {
