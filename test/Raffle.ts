@@ -10,7 +10,30 @@ describe("testing Raffle contract", () => {
     return { raffleContract, deployer, anotherDeployer };
   }
 
-  describe("basic rules about raffle creation", () => {
+  describe("about storing during raffle creation", async () => {
+    it("should store raffle creator address", async () => {
+      const { raffleContract, deployer } = await loadFixture(
+        deployRaffleModuleFixture
+      );
+      await raffleContract.createRaffle();
+      const owner = await raffleContract.s_ownersByRaffleId(0);
+      expect(owner).to.eql(deployer.address);
+    });
+
+    it("should store participants in raffle already created", async () => {
+      const { raffleContract, anotherDeployer } = await loadFixture(
+        deployRaffleModuleFixture
+      );
+      await raffleContract.createRaffle();
+      await raffleContract
+        .connect(anotherDeployer)
+        .addNewParticipantByRaffleId(0);
+      const participant = await raffleContract.s_participantsByRaffleId(0, 0);
+      expect(participant).to.eq(anotherDeployer.address);
+    });
+  });
+
+  describe("main rules about raffle creation", () => {
     it("should trigger an error when try to add participants in a no existing raffle", async () => {
       const { raffleContract } = await loadFixture(deployRaffleModuleFixture);
       await expect(
@@ -61,33 +84,5 @@ describe("testing Raffle contract", () => {
         "Raffle__RandomNotCalled"
       );
     });
-
-    // it("should store raffle creator address", async () => {
-    //   const { raffleContract, deployer } = await loadFixture(
-    //     deployRaffleModuleFixture
-    //   );
-    //   await raffleContract.createRaffle();
-    //   const owner = await raffleContract.s_ownersByRaffleId(0);
-    //   expect(owner).to.eql(deployer.address);
-    // });
-
-    // it("should store participants in raffle already created", async () => {
-    //   const { raffleContract, deployer } = await loadFixture(
-    //     deployRaffleModuleFixture
-    //   );
-
-    //   await expect(
-    //     raffleContract.addNewParticipantByRaffleId(0)
-    //   ).to.be.revertedWithCustomError(raffleContract, "Raffle__NoCreated");
-
-    //   await raffleContract.createRaffle();
-    //   const raffleId = 0;
-    //   await raffleContract.addNewParticipantByRaffleId(raffleId);
-    //   const participant = await raffleContract.mapRaffleIdToParticipants(
-    //     raffleId,
-    //     0
-    //   );
-    //   expect(participant).to.eq(deployer.address);
-    // });
   });
 });
