@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import MockDataFeed from "./mockDataFeed";
 import { network } from "hardhat";
 import { localhostChainId } from "../../../utils/utils";
-import { chainlinkContractAddresses } from "../../../utils/fundMe";
+import { chainlinkContractAddresses } from "../../../utils/contracts/fundMe";
 
 export default buildModule("FundMe", (m) => {
   const chainId = network.config.chainId!;
