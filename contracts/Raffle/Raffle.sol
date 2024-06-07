@@ -21,7 +21,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     bytes32 private s_keyHash;
     uint32 private s_callbackGasLimit;
 
-    uint private s_raffleIterator = 0;
+    uint private s_raffleIterator;
     mapping(uint => address) public s_ownersByRaffleId;
     mapping(uint => address[]) public s_participantsByRaffleId;
     mapping(uint => uint) public s_raffleIdByRequestId;
@@ -39,6 +39,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     function createRaffle() public {
+        s_raffleIterator = 0;
         s_ownersByRaffleId[s_raffleIterator] = msg.sender;
         ++s_raffleIterator;
     }
@@ -50,12 +51,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     function startRaffleById(uint raffleId) public {
-        if (s_ownersByRaffleId[raffleId] == msg.sender)
-            revert Raffle__OnlyOwner(raffleId);
+        if (s_ownersByRaffleId[raffleId] == address(0))
+            revert Raffle__NoCreated(raffleId);
         if (s_participantsByRaffleId[raffleId].length == 0)
             revert Raffle__NoParticipantsCreated(raffleId);
+        if (s_ownersByRaffleId[raffleId] != msg.sender)
+            revert Raffle__OnlyOwner(raffleId);
         if (s_rawWinnersByRaffleId[raffleId] != 0)
             revert Raffle__RandomAlreadyCalled(raffleId);
+
         uint256 requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
@@ -84,6 +88,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     }
 
     function getWinnerByRaffleId(uint raffleId) public view returns (address) {
+        if (s_ownersByRaffleId[raffleId] == address(0))
+            revert Raffle__NoCreated(raffleId);
         if (s_rawWinnersByRaffleId[raffleId] == 0)
             revert Raffle__RandomNotCalled(raffleId);
         if (s_rawWinnersByRaffleId[raffleId] > MAX_NUM_PARTICIPANTS)
