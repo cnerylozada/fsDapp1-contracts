@@ -17,7 +17,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     uint32 private immutable NUM_WORDS = 1;
     uint public immutable MAX_NUM_PARTICIPANTS = 7;
 
-    uint256 public s_subscriptionId;
+    uint256 private s_subscriptionId;
     bytes32 private s_keyHash;
     uint32 private s_callbackGasLimit;
 
@@ -28,10 +28,10 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         uint secondsToStart;
     }
     mapping(uint => address) public s_raffleIdToOwner;
-    mapping(uint => Raffle) public s_raffleIdToRaffleDetail;
+    mapping(uint => Raffle) private s_raffleIdToRaffleDetail;
     mapping(uint => address[]) public s_raffleIdToParticipants;
-    mapping(uint => uint) public s_requestIdToRaffleId;
-    mapping(uint => uint) public s_raffleIdToRawWinner;
+    mapping(uint => uint) private s_requestIdToRaffleId;
+    mapping(uint => uint) private s_raffleIdToRawWinner;
 
     event RequestIdByRaffleId(uint raffleId, uint requestId);
     event RawWinnerByRaffleId(uint raffleId, uint rawWinner);
