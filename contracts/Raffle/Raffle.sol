@@ -27,6 +27,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
     mapping(uint => uint) public s_raffleIdByRequestId;
     mapping(uint => uint) public s_rawWinnersByRaffleId;
 
+    event RequestIdByRaffleId(uint raffleId, uint requestId);
+    event RawWinnerByRaffleId(uint raffleId, uint rawWinner);
+
     constructor(
         uint256 subscriptionId,
         address vrfCoordinator,
@@ -47,6 +50,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function addNewParticipantByRaffleId(uint raffleId) public {
         if (s_ownersByRaffleId[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
+        if (s_rawWinnersByRaffleId[raffleId] > MAX_NUM_PARTICIPANTS)
+            revert Raffle__RandomInProgress();
         s_participantsByRaffleId[raffleId].push(msg.sender);
     }
 
@@ -74,6 +79,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         );
         s_raffleIdByRequestId[requestId] = raffleId;
         s_rawWinnersByRaffleId[raffleId] = MAX_NUM_PARTICIPANTS + 1;
+        emit RequestIdByRaffleId(raffleId, requestId);
     }
 
     function fulfillRandomWords(
@@ -85,6 +91,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
         s_rawWinnersByRaffleId[raffleId] =
             (randomWords[0] % participants.length) +
             1;
+
+        emit RawWinnerByRaffleId(raffleId, s_rawWinnersByRaffleId[raffleId]);
     }
 
     function getWinnerByRaffleId(uint raffleId) public view returns (address) {
