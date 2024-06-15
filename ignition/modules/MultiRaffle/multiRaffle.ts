@@ -4,7 +4,7 @@ import { ethers, network } from "hardhat";
 import { blockChainId } from "../../../utils/utils";
 import MockVRFCoordinatorV2_5 from "./mockVRFCoordinatorV2_5";
 
-export default buildModule("Raffle", (m) => {
+export default buildModule("MultiRaffle", (m) => {
   const args = randomRequestParameters.find(
     (_) => _.blockChainId === blockChainId.localhost
   )!;
@@ -17,7 +17,7 @@ export default buildModule("Raffle", (m) => {
     const args = randomRequestParameters.find(
       (_) => _.blockChainId === blockChainId.sepolia
     )!;
-    const raffleContract = m.contract("Raffle", [
+    const raffleContract = m.contract("MultiRaffle", [
       +args.subscriptionId,
       args.vrfCoordinatorAddress,
       args.keyHash,
@@ -43,7 +43,7 @@ export default buildModule("Raffle", (m) => {
   ]);
 
   const vrfCoordinatorAddress = mockVRFCoordinatorV2_5Contract;
-  const raffleContract = m.contract("Raffle", [
+  const raffleContract = m.contract("MultiRaffle", [
     subId,
     vrfCoordinatorAddress,
     args.keyHash,
