@@ -1,5 +1,5 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { randomRequestParameters } from "../../../utils/contracts/raffle";
+import { randomRequestParameters } from "../../../utils/contracts/multiRaffle";
 import { ethers, network } from "hardhat";
 import { blockChainId } from "../../../utils/utils";
 import MockVRFCoordinatorV2_5 from "./mockVRFCoordinatorV2_5";
@@ -39,7 +39,7 @@ export default buildModule("MultiRaffle", (m) => {
   );
   m.call(mockVRFCoordinatorV2_5Contract, "fundSubscription", [
     subId,
-    ethers.parseEther("50"),
+    ethers.parseEther("90"),
   ]);
 
   const vrfCoordinatorAddress = mockVRFCoordinatorV2_5Contract;

@@ -146,7 +146,7 @@ describe("testing Raffle contract", () => {
     });
   });
 
-  describe("after random choice is triggered", () => {
+  describe("after random choice is triggered", async () => {
     it("...", async () => {
       const {
         raffleContract,
@@ -156,15 +156,18 @@ describe("testing Raffle contract", () => {
         customerOne,
       } = await loadFixture(deployRaffleModuleFixture);
       await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
-      [deployer, anotherDeployer, customerOne].forEach(async (_) => {
-        await raffleContract
-          .connect(_)
-          .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
-      });
+
+      await raffleContract.addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
+      await raffleContract
+        .connect(anotherDeployer)
+        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
+      await raffleContract
+        .connect(customerOne)
+        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
 
       await new Promise<void>(async (resolve) => {
         raffleContract.once("RawWinnerByRaffleId", async () => {
-          const xxx = resolve();
+          resolve();
         });
 
         await raffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR);
