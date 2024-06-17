@@ -24,7 +24,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
 
     uint private s_raffleIterator = 0;
     struct Raffle {
-        uint feeInUSD;
+        uint feeInETH;
         uint id;
         uint secondsToStart;
     }
@@ -53,7 +53,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         s_raffleIdToOwner[currentIterator] = msg.sender;
         s_raffleIdToRaffleDetail[currentIterator] = Raffle({
             id: currentIterator,
-            feeInUSD: _feeInUSD,
+            feeInETH: _feeInUSD,
             secondsToStart: _secondsToStart
         });
         currentIterator = currentIterator + 1;
@@ -65,12 +65,12 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToRawWinner[raffleId] > MAX_NUM_PARTICIPANTS)
             revert Raffle__RandomInProgress();
-        if (1400000000000000 > msg.value)
-            revert Raffle__SendMoreToEnterRaffle();
+        Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
+        if (raffle.feeInETH > msg.value) revert Raffle__SendMoreToEnterRaffle();
         s_raffleIdToParticipants[raffleId].push(payable(msg.sender));
     }
 
-    function startRaffleById(uint raffleId) public {
+    function startRaffleById(uint raffleId) external {
         if (s_raffleIdToOwner[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToParticipants[raffleId].length == 0)
@@ -111,9 +111,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         emit RawWinnerByRaffleId(raffleId, s_raffleIdToRawWinner[raffleId]);
     }
 
-    function getWinnerByRaffleId(
-        uint raffleId
-    ) external view returns (address) {
+    function getWinnerByRaffleId(uint raffleId) external {
         if (s_raffleIdToOwner[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToRawWinner[raffleId] == 0)
@@ -124,15 +122,18 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             raffleId
         ];
         uint winnerIdex = s_raffleIdToRawWinner[raffleId] - 1;
-        return participants[winnerIdex];
+        awardWinnerByRafleId(raffleId, participants[winnerIdex]);
     }
 
-    function awardWinnerByRafleId(uint raffleId, address winner) external {
+    function awardWinnerByRafleId(
+        uint raffleId,
+        address payable winner
+    ) private {
         address payable[] memory participants = s_raffleIdToParticipants[
             raffleId
         ];
         Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
-        uint prize = 1400000000000000 * participants.length;
+        uint prize = raffle.feeInETH * participants.length;
         (bool callSuccess, ) = winner.call{value: prize}("");
         require(callSuccess, "Call failed");
     }

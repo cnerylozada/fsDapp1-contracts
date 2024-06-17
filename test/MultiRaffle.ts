@@ -5,7 +5,6 @@ import MultiRaffleModule from "../ignition/modules/MultiRaffle/multiRaffle";
 
 describe("testing Raffle contract", () => {
   const SECONDS_TO_START = 99;
-  const FEE_IN_USD = 25;
   const DEFAULT_RAFFLE_ITERATOR = 0;
   const VALID_FEE_IN_ETH = ethers.parseEther("0.0014");
   const INVALID_FEE_IN_ETH = ethers.parseEther("0.0010");
@@ -29,7 +28,10 @@ describe("testing Raffle contract", () => {
         await loadFixture(deployRaffleModuleFixture);
       let raffleIterator = DEFAULT_RAFFLE_ITERATOR;
 
-      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(
+        SECONDS_TO_START,
+        VALID_FEE_IN_ETH
+      );
       const oldRaffleOwner = await multiRaffleContract.s_raffleIdToOwner(
         raffleIterator
       );
@@ -38,7 +40,7 @@ describe("testing Raffle contract", () => {
       ++raffleIterator;
       await multiRaffleContract
         .connect(anotherDeployer)
-        .createRaffle(SECONDS_TO_START, FEE_IN_USD);
+        .createRaffle(SECONDS_TO_START, VALID_FEE_IN_ETH);
       const newRaffleOwner = await multiRaffleContract.s_raffleIdToOwner(
         raffleIterator
       );
@@ -56,7 +58,10 @@ describe("testing Raffle contract", () => {
         )
       ).to.be.revertedWithCustomError(multiRaffleContract, "Raffle__NoCreated");
 
-      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(
+        SECONDS_TO_START,
+        VALID_FEE_IN_ETH
+      );
       await expect(
         multiRaffleContract.addNewParticipantByRaffleId(
           DEFAULT_RAFFLE_ITERATOR,
@@ -99,7 +104,10 @@ describe("testing Raffle contract", () => {
         const { multiRaffleContract } = await loadFixture(
           deployRaffleModuleFixture
         );
-        await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+        await multiRaffleContract.createRaffle(
+          SECONDS_TO_START,
+          VALID_FEE_IN_ETH
+        );
         await expect(
           multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR)
         ).to.be.revertedWithCustomError(
@@ -111,7 +119,10 @@ describe("testing Raffle contract", () => {
         const { multiRaffleContract, anotherDeployer } = await loadFixture(
           deployRaffleModuleFixture
         );
-        await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+        await multiRaffleContract.createRaffle(
+          SECONDS_TO_START,
+          VALID_FEE_IN_ETH
+        );
         await multiRaffleContract.addNewParticipantByRaffleId(
           DEFAULT_RAFFLE_ITERATOR,
           { value: VALID_FEE_IN_ETH }
@@ -138,7 +149,10 @@ describe("testing Raffle contract", () => {
       const { multiRaffleContract } = await loadFixture(
         deployRaffleModuleFixture
       );
-      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(
+        SECONDS_TO_START,
+        VALID_FEE_IN_ETH
+      );
       await expect(
         multiRaffleContract.getWinnerByRaffleId(DEFAULT_RAFFLE_ITERATOR)
       ).to.be.revertedWithCustomError(
@@ -153,7 +167,10 @@ describe("testing Raffle contract", () => {
       const { multiRaffleContract, anotherDeployer } = await loadFixture(
         deployRaffleModuleFixture
       );
-      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(
+        SECONDS_TO_START,
+        VALID_FEE_IN_ETH
+      );
 
       await multiRaffleContract.addNewParticipantByRaffleId(
         DEFAULT_RAFFLE_ITERATOR,
@@ -199,7 +216,10 @@ describe("testing Raffle contract", () => {
         anotherDeployer,
         customerOne,
       } = await loadFixture(deployRaffleModuleFixture);
-      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(
+        SECONDS_TO_START,
+        VALID_FEE_IN_ETH
+      );
 
       await multiRaffleContract.addNewParticipantByRaffleId(
         DEFAULT_RAFFLE_ITERATOR,
