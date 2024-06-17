@@ -10,13 +10,13 @@ error Raffle__NoParticipantsCreated(uint raffleId);
 error Raffle__RandomNotCalled(uint raffleId);
 error Raffle__RandomAlreadyCalled(uint raffleId);
 error Raffle__RandomInProgress();
-error Raffle__MaxNumParticipants();
+error Raffle__MaxNumParticipants(uint raffleId);
 error Raffle__SendMoreToEnterRaffle();
 
 contract MultiRaffle is VRFConsumerBaseV2Plus {
     uint16 private immutable REQUEST_CONFIRMATIONS = 3;
     uint32 private immutable NUM_WORDS = 1;
-    uint public immutable MAX_NUM_PARTICIPANTS = 7;
+    uint public immutable MAX_NUM_PARTICIPANTS = 3;
 
     uint256 private s_subscriptionId;
     bytes32 private s_keyHash;
@@ -32,10 +32,10 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     mapping(uint => Raffle) private s_raffleIdToRaffleDetail;
     mapping(uint => address payable[]) public s_raffleIdToParticipants;
     mapping(uint => uint) private s_requestIdToRaffleId;
-    mapping(uint => uint) private s_raffleIdToRawWinner;
+    mapping(uint => uint) private s_raffleIdToWinnerIndex;
 
     event RequestIdByRaffleId(uint raffleId, uint requestId);
-    event RawWinnerByRaffleId(uint raffleId, uint rawWinner);
+    event WinnerPickedByRaffleId(uint raffleId, address winner);
 
     constructor(
         uint256 subscriptionId,
@@ -63,7 +63,10 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     function addNewParticipantByRaffleId(uint raffleId) external payable {
         if (s_raffleIdToOwner[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
-        if (s_raffleIdToRawWinner[raffleId] > MAX_NUM_PARTICIPANTS)
+        uint numParticipants = s_raffleIdToParticipants[raffleId].length;
+        if (numParticipants == MAX_NUM_PARTICIPANTS)
+            revert Raffle__MaxNumParticipants(raffleId);
+        if (s_raffleIdToWinnerIndex[raffleId] > MAX_NUM_PARTICIPANTS)
             revert Raffle__RandomInProgress();
         Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
         if (raffle.feeInETH > msg.value) revert Raffle__SendMoreToEnterRaffle();
@@ -77,7 +80,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             revert Raffle__NoParticipantsCreated(raffleId);
         if (s_raffleIdToOwner[raffleId] != msg.sender)
             revert Raffle__OnlyOwner(raffleId);
-        if (s_raffleIdToRawWinner[raffleId] != 0)
+        if (s_raffleIdToWinnerIndex[raffleId] != 0)
             revert Raffle__RandomAlreadyCalled(raffleId);
 
         uint256 requestId = s_vrfCoordinator.requestRandomWords(
@@ -93,7 +96,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             })
         );
         s_requestIdToRaffleId[requestId] = raffleId;
-        s_raffleIdToRawWinner[raffleId] = MAX_NUM_PARTICIPANTS + 1;
+        s_raffleIdToWinnerIndex[raffleId] = MAX_NUM_PARTICIPANTS + 1;
         emit RequestIdByRaffleId(raffleId, requestId);
     }
 
@@ -105,36 +108,38 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         address payable[] memory participants = s_raffleIdToParticipants[
             raffleId
         ];
-        s_raffleIdToRawWinner[raffleId] =
-            (randomWords[0] % participants.length) +
-            1;
-        emit RawWinnerByRaffleId(raffleId, s_raffleIdToRawWinner[raffleId]);
+        s_raffleIdToWinnerIndex[raffleId] = (randomWords[0] %
+            participants.length);
+        awardWinnerByRafleId(raffleId, s_raffleIdToWinnerIndex[raffleId]);
     }
 
-    function getWinnerByRaffleId(uint raffleId) external {
-        if (s_raffleIdToOwner[raffleId] == address(0))
-            revert Raffle__NoCreated(raffleId);
-        if (s_raffleIdToRawWinner[raffleId] == 0)
-            revert Raffle__RandomNotCalled(raffleId);
-        if (s_raffleIdToRawWinner[raffleId] > MAX_NUM_PARTICIPANTS)
-            revert Raffle__RandomInProgress();
+    function awardWinnerByRafleId(uint raffleId, uint winnerIndex) private {
         address payable[] memory participants = s_raffleIdToParticipants[
             raffleId
         ];
-        uint winnerIdex = s_raffleIdToRawWinner[raffleId] - 1;
-        awardWinnerByRafleId(raffleId, participants[winnerIdex]);
-    }
+        address payable winner = participants[winnerIndex];
 
-    function awardWinnerByRafleId(
-        uint raffleId,
-        address payable winner
-    ) private {
-        address payable[] memory participants = s_raffleIdToParticipants[
-            raffleId
-        ];
         Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
         uint prize = raffle.feeInETH * participants.length;
         (bool callSuccess, ) = winner.call{value: prize}("");
         require(callSuccess, "Call failed");
+        emit WinnerPickedByRaffleId(raffleId, winner);
+    }
+
+    function getWinnerByRaffleId(
+        uint raffleId
+    ) external view returns (address) {
+        if (s_raffleIdToOwner[raffleId] == address(0))
+            revert Raffle__NoCreated(raffleId);
+        if (s_raffleIdToWinnerIndex[raffleId] == 0)
+            revert Raffle__RandomNotCalled(raffleId);
+        if (s_raffleIdToWinnerIndex[raffleId] > MAX_NUM_PARTICIPANTS)
+            revert Raffle__RandomInProgress();
+
+        address payable[] memory participants = s_raffleIdToParticipants[
+            raffleId
+        ];
+        uint winnerIndex = s_raffleIdToWinnerIndex[raffleId];
+        return participants[winnerIndex];
     }
 }

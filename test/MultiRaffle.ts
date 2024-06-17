@@ -208,36 +208,30 @@ describe("testing Raffle contract", () => {
   });
 
   describe("after random choice is triggered", async () => {
-    it("...", async () => {
-      const {
-        multiRaffleContract,
-        mockVRFCoordinatorV2_5Contract,
-        deployer,
-        anotherDeployer,
-        customerOne,
-      } = await loadFixture(deployRaffleModuleFixture);
+    it("should be selected only one winner", async () => {
+      const { multiRaffleContract, mockVRFCoordinatorV2_5Contract } =
+        await loadFixture(deployRaffleModuleFixture);
       await multiRaffleContract.createRaffle(
         SECONDS_TO_START,
         VALID_FEE_IN_ETH
       );
+      const numberParticipants = 2;
+      const signers = await ethers.getSigners();
+      const participants = signers.slice(0, numberParticipants);
 
-      await multiRaffleContract.addNewParticipantByRaffleId(
-        DEFAULT_RAFFLE_ITERATOR,
-        { value: VALID_FEE_IN_ETH }
-      );
-      await multiRaffleContract
-        .connect(anotherDeployer)
-        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR, {
+      for (let index = 0; index < numberParticipants; index++) {
+        const contract = multiRaffleContract.connect(participants[index]);
+        await contract.addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR, {
           value: VALID_FEE_IN_ETH,
         });
-      await multiRaffleContract
-        .connect(customerOne)
-        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR, {
-          value: VALID_FEE_IN_ETH,
-        });
+      }
 
       await new Promise<void>(async (resolve) => {
-        multiRaffleContract.once("RawWinnerByRaffleId", async () => {
+        multiRaffleContract.once("WinnerPickedByRaffleId", async () => {
+          const winnerAddress = await multiRaffleContract.getWinnerByRaffleId(
+            DEFAULT_RAFFLE_ITERATOR
+          );
+          console.log(winnerAddress);
           resolve();
         });
 
