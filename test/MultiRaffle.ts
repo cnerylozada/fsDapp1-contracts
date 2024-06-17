@@ -1,20 +1,22 @@
 import { expect } from "chai";
 import { ethers, ignition } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import RaffleModule from "../ignition/modules/MultiRaffle/multiRaffle";
+import MultiRaffleModule from "../ignition/modules/MultiRaffle/multiRaffle";
 
 describe("testing Raffle contract", () => {
   const SECONDS_TO_START = 99;
   const FEE_IN_USD = 25;
   const DEFAULT_RAFFLE_ITERATOR = 0;
+  const VALID_FEE_IN_ETH = ethers.parseEther("0.005");
+  const INVALID_FEE_IN_ETH = ethers.parseEther("0.004");
 
   async function deployRaffleModuleFixture() {
     const [deployer, anotherDeployer, customerOne] = await ethers.getSigners();
-    const { raffleContract, mockVRFCoordinatorV2_5Contract } =
-      await ignition.deploy(RaffleModule);
+    const { multiRaffleContract, mockVRFCoordinatorV2_5Contract } =
+      await ignition.deploy(MultiRaffleModule);
     return {
       mockVRFCoordinatorV2_5Contract,
-      raffleContract,
+      multiRaffleContract,
       deployer,
       anotherDeployer,
       customerOne,
@@ -23,90 +25,124 @@ describe("testing Raffle contract", () => {
 
   describe("about storing during raffle creation", async () => {
     it("should store raffle creator address", async () => {
-      const { raffleContract, deployer, anotherDeployer } = await loadFixture(
-        deployRaffleModuleFixture
-      );
+      const { multiRaffleContract, deployer, anotherDeployer } =
+        await loadFixture(deployRaffleModuleFixture);
       let raffleIterator = DEFAULT_RAFFLE_ITERATOR;
 
-      await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
-      const oldRaffleOwner = await raffleContract.s_raffleIdToOwner(
+      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      const oldRaffleOwner = await multiRaffleContract.s_raffleIdToOwner(
         raffleIterator
       );
       expect(oldRaffleOwner).to.eql(deployer.address);
 
       ++raffleIterator;
-      await raffleContract
+      await multiRaffleContract
         .connect(anotherDeployer)
         .createRaffle(SECONDS_TO_START, FEE_IN_USD);
-      const newRaffleOwner = await raffleContract.s_raffleIdToOwner(
+      const newRaffleOwner = await multiRaffleContract.s_raffleIdToOwner(
         raffleIterator
       );
       expect(newRaffleOwner).to.eql(anotherDeployer.address);
     });
 
     it("should store participants in raffle already created", async () => {
-      const { raffleContract, anotherDeployer } = await loadFixture(
+      const { multiRaffleContract, deployer } = await loadFixture(
         deployRaffleModuleFixture
       );
       await expect(
-        raffleContract.addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR)
-      ).to.be.revertedWithCustomError(raffleContract, "Raffle__NoCreated");
+        multiRaffleContract.addNewParticipantByRaffleId(
+          DEFAULT_RAFFLE_ITERATOR,
+          { value: VALID_FEE_IN_ETH }
+        )
+      ).to.be.revertedWithCustomError(multiRaffleContract, "Raffle__NoCreated");
 
-      await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
-      await raffleContract
-        .connect(anotherDeployer)
-        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
-      const participant = await raffleContract.s_raffleIdToParticipants(0, 0);
-      expect(participant).to.eq(anotherDeployer.address);
+      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await expect(
+        multiRaffleContract.addNewParticipantByRaffleId(
+          DEFAULT_RAFFLE_ITERATOR,
+          {
+            value: INVALID_FEE_IN_ETH,
+          }
+        )
+      ).to.be.revertedWithCustomError(
+        multiRaffleContract,
+        "Raffle__SendMoreToEnterRaffle"
+      );
+      await multiRaffleContract.addNewParticipantByRaffleId(
+        DEFAULT_RAFFLE_ITERATOR,
+        {
+          value: VALID_FEE_IN_ETH,
+        }
+      );
+      const participant = await multiRaffleContract.s_raffleIdToParticipants(
+        0,
+        0
+      );
+      expect(participant).to.eq(deployer.address);
     });
   });
 
   describe("main rules about raffle creation", () => {
     describe("about start a raffle by id", () => {
       it("should return an error when it does not exist", async () => {
-        const { raffleContract } = await loadFixture(deployRaffleModuleFixture);
+        const { multiRaffleContract } = await loadFixture(
+          deployRaffleModuleFixture
+        );
         await expect(
-          raffleContract.startRaffleById(99)
-        ).to.be.revertedWithCustomError(raffleContract, "Raffle__NoCreated");
+          multiRaffleContract.startRaffleById(99)
+        ).to.be.revertedWithCustomError(
+          multiRaffleContract,
+          "Raffle__NoCreated"
+        );
       });
       it("shoult return an error when there are no participants added", async () => {
-        const { raffleContract } = await loadFixture(deployRaffleModuleFixture);
-        await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+        const { multiRaffleContract } = await loadFixture(
+          deployRaffleModuleFixture
+        );
+        await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
         await expect(
-          raffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR)
+          multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR)
         ).to.be.revertedWithCustomError(
-          raffleContract,
+          multiRaffleContract,
           "Raffle__NoParticipantsCreated"
         );
       });
       it("should return an error if someone but the owner try to start it", async () => {
-        const { raffleContract, anotherDeployer } = await loadFixture(
+        const { multiRaffleContract, anotherDeployer } = await loadFixture(
           deployRaffleModuleFixture
         );
-        await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
-        await raffleContract.addNewParticipantByRaffleId(
-          DEFAULT_RAFFLE_ITERATOR
+        await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+        await multiRaffleContract.addNewParticipantByRaffleId(
+          DEFAULT_RAFFLE_ITERATOR,
+          { value: VALID_FEE_IN_ETH }
         );
         await expect(
-          raffleContract
+          multiRaffleContract
             .connect(anotherDeployer)
             .startRaffleById(DEFAULT_RAFFLE_ITERATOR)
-        ).to.be.revertedWithCustomError(raffleContract, "Raffle__OnlyOwner");
+        ).to.be.revertedWithCustomError(
+          multiRaffleContract,
+          "Raffle__OnlyOwner"
+        );
       });
     });
     it("should trigger an error when try to get the winner of a no existing raffle", async () => {
-      const { raffleContract } = await loadFixture(deployRaffleModuleFixture);
+      const { multiRaffleContract } = await loadFixture(
+        deployRaffleModuleFixture
+      );
       await expect(
-        raffleContract.getWinnerByRaffleId(99)
-      ).to.be.revertedWithCustomError(raffleContract, "Raffle__NoCreated");
+        multiRaffleContract.getWinnerByRaffleId(99)
+      ).to.be.revertedWithCustomError(multiRaffleContract, "Raffle__NoCreated");
     });
     it("should trigger an error if you want to know the winner and the raffle has not started yet", async () => {
-      const { raffleContract } = await loadFixture(deployRaffleModuleFixture);
-      await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      const { multiRaffleContract } = await loadFixture(
+        deployRaffleModuleFixture
+      );
+      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
       await expect(
-        raffleContract.getWinnerByRaffleId(DEFAULT_RAFFLE_ITERATOR)
+        multiRaffleContract.getWinnerByRaffleId(DEFAULT_RAFFLE_ITERATOR)
       ).to.be.revertedWithCustomError(
-        raffleContract,
+        multiRaffleContract,
         "Raffle__RandomNotCalled"
       );
     });
@@ -114,33 +150,41 @@ describe("testing Raffle contract", () => {
 
   describe("about looking for the wiinner", async () => {
     it("should return an error when the election is in progress", async () => {
-      const { raffleContract, anotherDeployer } = await loadFixture(
+      const { multiRaffleContract, anotherDeployer } = await loadFixture(
         deployRaffleModuleFixture
       );
-      await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
 
-      await raffleContract.addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
-      await raffleContract
+      await multiRaffleContract.addNewParticipantByRaffleId(
+        DEFAULT_RAFFLE_ITERATOR,
+        { value: VALID_FEE_IN_ETH }
+      );
+      await multiRaffleContract
         .connect(anotherDeployer)
-        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
-      await raffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR);
+        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR, {
+          value: VALID_FEE_IN_ETH,
+        });
+      await multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR);
 
       await expect(
-        raffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR)
+        multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR)
       ).to.be.revertedWithCustomError(
-        raffleContract,
+        multiRaffleContract,
         "Raffle__RandomAlreadyCalled"
       );
       await expect(
-        raffleContract.addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR)
+        multiRaffleContract.addNewParticipantByRaffleId(
+          DEFAULT_RAFFLE_ITERATOR,
+          { value: VALID_FEE_IN_ETH }
+        )
       ).to.be.revertedWithCustomError(
-        raffleContract,
+        multiRaffleContract,
         "Raffle__RandomInProgress"
       );
       await expect(
-        raffleContract.getWinnerByRaffleId(DEFAULT_RAFFLE_ITERATOR)
+        multiRaffleContract.getWinnerByRaffleId(DEFAULT_RAFFLE_ITERATOR)
       ).to.be.revertedWithCustomError(
-        raffleContract,
+        multiRaffleContract,
         "Raffle__RandomInProgress"
       );
     });
@@ -149,36 +193,43 @@ describe("testing Raffle contract", () => {
   describe("after random choice is triggered", async () => {
     it("...", async () => {
       const {
-        raffleContract,
+        multiRaffleContract,
         mockVRFCoordinatorV2_5Contract,
         deployer,
         anotherDeployer,
         customerOne,
       } = await loadFixture(deployRaffleModuleFixture);
-      await raffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
+      await multiRaffleContract.createRaffle(SECONDS_TO_START, FEE_IN_USD);
 
-      await raffleContract.addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
-      await raffleContract
+      await multiRaffleContract.addNewParticipantByRaffleId(
+        DEFAULT_RAFFLE_ITERATOR,
+        { value: VALID_FEE_IN_ETH }
+      );
+      await multiRaffleContract
         .connect(anotherDeployer)
-        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
-      await raffleContract
+        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR, {
+          value: VALID_FEE_IN_ETH,
+        });
+      await multiRaffleContract
         .connect(customerOne)
-        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR);
+        .addNewParticipantByRaffleId(DEFAULT_RAFFLE_ITERATOR, {
+          value: VALID_FEE_IN_ETH,
+        });
 
       await new Promise<void>(async (resolve) => {
-        raffleContract.once("RawWinnerByRaffleId", async () => {
+        multiRaffleContract.once("RawWinnerByRaffleId", async () => {
           resolve();
         });
 
-        await raffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR);
-        const filter = raffleContract.filters.RequestIdByRaffleId();
-        const requestIdByRaffleIdEvent = await raffleContract.queryFilter(
+        await multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR);
+        const filter = multiRaffleContract.filters.RequestIdByRaffleId();
+        const requestIdByRaffleIdEvent = await multiRaffleContract.queryFilter(
           filter
         );
         const requestId = requestIdByRaffleIdEvent[0].args[1];
         await mockVRFCoordinatorV2_5Contract.fulfillRandomWords(
           requestId,
-          raffleContract
+          multiRaffleContract
         );
       });
     });

@@ -43,7 +43,7 @@ export default buildModule("MultiRaffle", (m) => {
   ]);
 
   const vrfCoordinatorAddress = mockVRFCoordinatorV2_5Contract;
-  const raffleContract = m.contract("MultiRaffle", [
+  const multiRaffleContract = m.contract("MultiRaffle", [
     subId,
     vrfCoordinatorAddress,
     args.keyHash,
@@ -52,7 +52,7 @@ export default buildModule("MultiRaffle", (m) => {
 
   m.call(mockVRFCoordinatorV2_5Contract, "addConsumer", [
     subId,
-    raffleContract,
+    multiRaffleContract,
   ]);
-  return { raffleContract, mockVRFCoordinatorV2_5Contract };
+  return { multiRaffleContract, mockVRFCoordinatorV2_5Contract };
 });

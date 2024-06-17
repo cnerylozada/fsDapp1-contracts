@@ -11,6 +11,7 @@ error Raffle__RandomNotCalled(uint raffleId);
 error Raffle__RandomAlreadyCalled(uint raffleId);
 error Raffle__RandomInProgress();
 error Raffle__MaxNumParticipants();
+error Raffle__SendMoreToEnterRaffle();
 
 contract MultiRaffle is VRFConsumerBaseV2Plus {
     uint16 private immutable REQUEST_CONFIRMATIONS = 3;
@@ -47,25 +48,26 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         s_callbackGasLimit = callbackGasLimit;
     }
 
-    function createRaffle(uint _secondsToStart, uint _feeInUSD) public {
+    function createRaffle(uint _secondsToStart, uint _feeInUSD) external {
         uint currentIterator = s_raffleIterator;
         s_raffleIdToOwner[currentIterator] = msg.sender;
-        Raffle memory newRaffle = Raffle({
+        s_raffleIdToRaffleDetail[currentIterator] = Raffle({
             id: currentIterator,
             feeInUSD: _feeInUSD,
             secondsToStart: _secondsToStart
         });
-        s_raffleIdToRaffleDetail[currentIterator] = newRaffle;
         currentIterator = currentIterator + 1;
         s_raffleIterator = currentIterator;
     }
 
-    function addNewParticipantByRaffleId(uint raffleId) public {
+    function addNewParticipantByRaffleId(uint raffleId) external payable {
         if (s_raffleIdToOwner[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToRawWinner[raffleId] > MAX_NUM_PARTICIPANTS)
             revert Raffle__RandomInProgress();
-        s_raffleIdToParticipants[raffleId].push(msg.sender);
+        if (5000000000000000 > msg.value)
+            revert Raffle__SendMoreToEnterRaffle();
+        s_raffleIdToParticipants[raffleId].push(payable(msg.sender));
     }
 
     function startRaffleById(uint raffleId) public {
@@ -104,11 +106,12 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         s_raffleIdToRawWinner[raffleId] =
             (randomWords[0] % participants.length) +
             1;
-
         emit RawWinnerByRaffleId(raffleId, s_raffleIdToRawWinner[raffleId]);
     }
 
-    function getWinnerByRaffleId(uint raffleId) public view returns (address) {
+    function getWinnerByRaffleId(
+        uint raffleId
+    ) external view returns (address) {
         if (s_raffleIdToOwner[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToRawWinner[raffleId] == 0)
