@@ -48,12 +48,12 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         s_callbackGasLimit = callbackGasLimit;
     }
 
-    function createRaffle(uint _secondsToStart, uint _feeInUSD) external {
+    function createRaffle(uint _secondsToStart, uint _feeInETH) external {
         uint currentIterator = s_raffleIterator;
         s_raffleIdToOwner[currentIterator] = msg.sender;
         s_raffleIdToRaffleDetail[currentIterator] = Raffle({
             id: currentIterator,
-            feeInETH: _feeInUSD,
+            feeInETH: _feeInETH,
             secondsToStart: _secondsToStart
         });
         currentIterator = currentIterator + 1;
