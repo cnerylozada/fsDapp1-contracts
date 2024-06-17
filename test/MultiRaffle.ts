@@ -7,8 +7,8 @@ describe("testing Raffle contract", () => {
   const SECONDS_TO_START = 99;
   const FEE_IN_USD = 25;
   const DEFAULT_RAFFLE_ITERATOR = 0;
-  const VALID_FEE_IN_ETH = ethers.parseEther("0.005");
-  const INVALID_FEE_IN_ETH = ethers.parseEther("0.004");
+  const VALID_FEE_IN_ETH = ethers.parseEther("0.0014");
+  const INVALID_FEE_IN_ETH = ethers.parseEther("0.0010");
 
   async function deployRaffleModuleFixture() {
     const [deployer, anotherDeployer, customerOne] = await ethers.getSigners();

@@ -30,7 +30,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     }
     mapping(uint => address) public s_raffleIdToOwner;
     mapping(uint => Raffle) private s_raffleIdToRaffleDetail;
-    mapping(uint => address[]) public s_raffleIdToParticipants;
+    mapping(uint => address payable[]) public s_raffleIdToParticipants;
     mapping(uint => uint) private s_requestIdToRaffleId;
     mapping(uint => uint) private s_raffleIdToRawWinner;
 
@@ -65,7 +65,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToRawWinner[raffleId] > MAX_NUM_PARTICIPANTS)
             revert Raffle__RandomInProgress();
-        if (5000000000000000 > msg.value)
+        if (1400000000000000 > msg.value)
             revert Raffle__SendMoreToEnterRaffle();
         s_raffleIdToParticipants[raffleId].push(payable(msg.sender));
     }
@@ -102,7 +102,9 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         uint256[] calldata randomWords
     ) internal override {
         uint raffleId = s_requestIdToRaffleId[requestId];
-        address[] memory participants = s_raffleIdToParticipants[raffleId];
+        address payable[] memory participants = s_raffleIdToParticipants[
+            raffleId
+        ];
         s_raffleIdToRawWinner[raffleId] =
             (randomWords[0] % participants.length) +
             1;
@@ -118,8 +120,20 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             revert Raffle__RandomNotCalled(raffleId);
         if (s_raffleIdToRawWinner[raffleId] > MAX_NUM_PARTICIPANTS)
             revert Raffle__RandomInProgress();
-        address[] memory participants = s_raffleIdToParticipants[raffleId];
+        address payable[] memory participants = s_raffleIdToParticipants[
+            raffleId
+        ];
         uint winnerIdex = s_raffleIdToRawWinner[raffleId] - 1;
         return participants[winnerIdex];
+    }
+
+    function awardWinnerByRafleId(uint raffleId, address winner) external {
+        address payable[] memory participants = s_raffleIdToParticipants[
+            raffleId
+        ];
+        Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
+        uint prize = 1400000000000000 * participants.length;
+        (bool callSuccess, ) = winner.call{value: prize}("");
+        require(callSuccess, "Call failed");
     }
 }
