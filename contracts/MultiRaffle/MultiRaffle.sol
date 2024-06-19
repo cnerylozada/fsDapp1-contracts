@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {RaffleLibrary} from "./RafleLibrary.sol";
 
 error Raffle__NoCreated(uint raffleId);
 error Raffle__OnlyOwner(uint raffleId);
@@ -14,22 +15,13 @@ error Raffle__MaxNumParticipants(uint raffleId);
 error Raffle__SendMoreToEnterRaffle();
 
 contract MultiRaffle is VRFConsumerBaseV2Plus {
-    uint16 private immutable REQUEST_CONFIRMATIONS = 3;
-    uint32 private immutable NUM_WORDS = 1;
-    uint public immutable MAX_NUM_PARTICIPANTS = 3;
-
     uint256 private s_subscriptionId;
     bytes32 private s_keyHash;
     uint32 private s_callbackGasLimit;
 
     uint private s_raffleIterator = 0;
-    struct Raffle {
-        uint feeInETH;
-        uint id;
-        uint secondsToStart;
-    }
     mapping(uint => address) public s_raffleIdToOwner;
-    mapping(uint => Raffle) private s_raffleIdToRaffleDetail;
+    mapping(uint => RaffleLibrary.Raffle) private s_raffleIdToRaffleDetail;
     mapping(uint => address payable[]) public s_raffleIdToParticipants;
     mapping(uint => uint) private s_requestIdToRaffleId;
     mapping(uint => uint) private s_raffleIdToWinnerIndex;
@@ -51,7 +43,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     function createRaffle(uint _secondsToStart, uint _feeInETH) external {
         uint currentIterator = s_raffleIterator;
         s_raffleIdToOwner[currentIterator] = msg.sender;
-        s_raffleIdToRaffleDetail[currentIterator] = Raffle({
+        s_raffleIdToRaffleDetail[currentIterator] = RaffleLibrary.Raffle({
             id: currentIterator,
             feeInETH: _feeInETH,
             secondsToStart: _secondsToStart
@@ -64,11 +56,13 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         if (s_raffleIdToOwner[raffleId] == address(0))
             revert Raffle__NoCreated(raffleId);
         uint numParticipants = s_raffleIdToParticipants[raffleId].length;
-        if (numParticipants == MAX_NUM_PARTICIPANTS)
+        if (numParticipants == RaffleLibrary.MAX_NUM_PARTICIPANTS)
             revert Raffle__MaxNumParticipants(raffleId);
-        if (s_raffleIdToWinnerIndex[raffleId] > MAX_NUM_PARTICIPANTS)
-            revert Raffle__RandomInProgress();
-        Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
+        if (
+            s_raffleIdToWinnerIndex[raffleId] >
+            RaffleLibrary.MAX_NUM_PARTICIPANTS
+        ) revert Raffle__RandomInProgress();
+        RaffleLibrary.Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
         if (raffle.feeInETH > msg.value) revert Raffle__SendMoreToEnterRaffle();
         s_raffleIdToParticipants[raffleId].push(payable(msg.sender));
     }
@@ -87,16 +81,18 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
                 subId: s_subscriptionId,
-                requestConfirmations: REQUEST_CONFIRMATIONS,
+                requestConfirmations: RaffleLibrary.REQUEST_CONFIRMATIONS,
                 callbackGasLimit: s_callbackGasLimit,
-                numWords: NUM_WORDS,
+                numWords: RaffleLibrary.NUM_WORDS,
                 extraArgs: VRFV2PlusClient._argsToBytes(
                     VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
                 )
             })
         );
         s_requestIdToRaffleId[requestId] = raffleId;
-        s_raffleIdToWinnerIndex[raffleId] = MAX_NUM_PARTICIPANTS + 1;
+        s_raffleIdToWinnerIndex[raffleId] =
+            RaffleLibrary.MAX_NUM_PARTICIPANTS +
+            1;
         emit RequestIdByRaffleId(raffleId, requestId);
     }
 
@@ -119,7 +115,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         ];
         address payable winner = participants[winnerIndex];
 
-        Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
+        RaffleLibrary.Raffle memory raffle = s_raffleIdToRaffleDetail[raffleId];
         uint prize = raffle.feeInETH * participants.length;
         (bool callSuccess, ) = winner.call{value: prize}("");
         require(callSuccess, "Call failed");
@@ -133,8 +129,10 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
             revert Raffle__NoCreated(raffleId);
         if (s_raffleIdToWinnerIndex[raffleId] == 0)
             revert Raffle__RandomNotCalled(raffleId);
-        if (s_raffleIdToWinnerIndex[raffleId] > MAX_NUM_PARTICIPANTS)
-            revert Raffle__RandomInProgress();
+        if (
+            s_raffleIdToWinnerIndex[raffleId] >
+            RaffleLibrary.MAX_NUM_PARTICIPANTS
+        ) revert Raffle__RandomInProgress();
 
         address payable[] memory participants = s_raffleIdToParticipants[
             raffleId
