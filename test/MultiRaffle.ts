@@ -215,7 +215,7 @@ describe("testing Raffle contract", () => {
         SECONDS_TO_START,
         VALID_FEE_IN_ETH
       );
-      const numberParticipants = 2;
+      const numberParticipants = 3;
       const signers = await ethers.getSigners();
       const participants = signers.slice(0, numberParticipants);
 
@@ -226,13 +226,23 @@ describe("testing Raffle contract", () => {
         });
       }
 
-      await new Promise<void>(async (resolve) => {
+      const winner = participants[numberParticipants - 1];
+      const startingWinnerBalance = await ethers.provider.getBalance(winner);
+      await new Promise<void>(async (resolve, reject) => {
         multiRaffleContract.once("WinnerPickedByRaffleId", async () => {
-          const winnerAddress = await multiRaffleContract.getWinnerByRaffleId(
-            DEFAULT_RAFFLE_ITERATOR
-          );
-          console.log(winnerAddress);
-          resolve();
+          try {
+            await multiRaffleContract.getWinnerByRaffleId(
+              DEFAULT_RAFFLE_ITERATOR
+            );
+            const winnerBalance = await ethers.provider.getBalance(winner);
+            expect(winnerBalance).to.eq(
+              startingWinnerBalance +
+                VALID_FEE_IN_ETH * ethers.toBigInt(numberParticipants)
+            );
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         });
 
         await multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR);
