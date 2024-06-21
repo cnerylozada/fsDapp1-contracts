@@ -1,7 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { expect } from "chai";
 import { ignition } from "hardhat";
-import GreeterContractModule from "../ignition/modules/Greeter";
+import GreeterContractModule from "../../ignition/modules/Greeter";
 
 describe("Testing Greeter contract", () => {
   async function deployGreeterContract() {

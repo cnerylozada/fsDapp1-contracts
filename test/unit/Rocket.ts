@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ignition } from "hardhat";
-import RocketModule from "../ignition/modules/Rocket/contract";
+import RocketModule from "../../ignition/modules/Rocket/contract";
 
 describe("testing Rocket Contract", function () {
   const deployRocketContract = async (args: { name: string }) => {

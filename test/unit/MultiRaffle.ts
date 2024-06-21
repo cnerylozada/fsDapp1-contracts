@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers, ignition } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import MultiRaffleModule from "../ignition/modules/MultiRaffle/multiRaffle";
+import MultiRaffleModule from "../../ignition/modules/MultiRaffle/multiRaffle";
 
 describe("testing Raffle contract", () => {
   const SECONDS_TO_START = 99;

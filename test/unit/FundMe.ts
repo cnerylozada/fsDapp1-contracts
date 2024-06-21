@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ignition, ethers } from "hardhat";
-import FundMeModule from "../ignition/modules/FundMe/fundMe";
+import FundMeModule from "../../ignition/modules/FundMe/fundMe";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 
 describe("testing FundMe Contract", function () {
