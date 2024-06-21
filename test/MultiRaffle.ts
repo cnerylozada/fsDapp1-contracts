@@ -187,7 +187,7 @@ describe("testing Raffle contract", () => {
         multiRaffleContract.startRaffleById(DEFAULT_RAFFLE_ITERATOR)
       ).to.be.revertedWithCustomError(
         multiRaffleContract,
-        "Raffle__RandomAlreadyCalled"
+        "Raffle_NotAvailable"
       );
       await expect(
         multiRaffleContract.addNewParticipantByRaffleId(
@@ -196,7 +196,7 @@ describe("testing Raffle contract", () => {
         )
       ).to.be.revertedWithCustomError(
         multiRaffleContract,
-        "Raffle__RandomInProgress"
+        "Raffle_NotAvailable"
       );
       await expect(
         multiRaffleContract.getWinnerByRaffleId(DEFAULT_RAFFLE_ITERATOR)
