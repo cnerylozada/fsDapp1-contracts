@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const ALCHEMY_SEPOLIA_APIKEY = process.env.ALCHEMY_SEPOLIA_APIKEY;
-const SEPOLIA_PRIVATEKEY = process.env.SEPOLIA_PRIVATEKEY!;
+const SEPOLIA_MAINDEPLOYER_PRIVATEKEY =
+  process.env.SEPOLIA_MAINDEPLOYER_PRIVATEKEY!;
 const COINMARKET_API_KEY = process.env.COINMARKET_API_KEY;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
@@ -33,7 +34,7 @@ const config: HardhatUserConfig = {
     },
     sepolia: {
       url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_SEPOLIA_APIKEY}`,
-      accounts: [SEPOLIA_PRIVATEKEY],
+      accounts: [SEPOLIA_MAINDEPLOYER_PRIVATEKEY],
       chainId: 11155111,
     },
   },
