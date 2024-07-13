@@ -20,7 +20,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     bytes32 private s_keyHash;
     uint32 private s_callbackGasLimit;
 
-    uint private s_raffleIterator = 0;
+    uint private s_raffleIterator = 1;
     mapping(uint => address) public s_raffleIdToOwner;
     mapping(uint => RaffleLibrary.Raffle) private s_raffleIdToRaffleDetail;
     mapping(uint => address payable[]) public s_raffleIdToParticipants;
@@ -65,19 +65,18 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         if (s_raffleIdToOwner[_raffleId] == address(0))
             revert Raffle__NoCreated(_raffleId);
 
-        uint numParticipants = s_raffleIdToParticipants[_raffleId].length;
         RaffleLibrary.Raffle memory raffleDetail = s_raffleIdToRaffleDetail[
             _raffleId
         ];
+        if (raffleDetail.state != RaffleLibrary.RaffleState.OPEN)
+            revert Raffle_NotAvailable();
+        if (raffleDetail.feeInETH > msg.value)
+            revert Raffle__SendMoreToEnterRaffle();
 
+        uint numParticipants = s_raffleIdToParticipants[_raffleId].length;
         if (numParticipants == raffleDetail.numberOfTickets)
             revert Raffle__MaxNumParticipants();
 
-        if (raffleDetail.state != RaffleLibrary.RaffleState.OPEN)
-            revert Raffle_NotAvailable();
-
-        if (raffleDetail.feeInETH > msg.value)
-            revert Raffle__SendMoreToEnterRaffle();
         s_raffleIdToParticipants[_raffleId].push(payable(msg.sender));
     }
 
