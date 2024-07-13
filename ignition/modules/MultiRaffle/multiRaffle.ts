@@ -9,24 +9,25 @@ export default buildModule("MultiRaffle", (m) => {
     (_) => _.blockChainId === blockChainId.localhost
   )!;
 
-  const { mockVRFCoordinatorV2_5Contract } = m.useModule(
-    MockVRFCoordinatorV2_5
-  );
-
   if (network.config.chainId === blockChainId.sepolia) {
     const args = randomRequestParameters.find(
       (_) => _.blockChainId === blockChainId.sepolia
     )!;
     const raffleContract = m.contract("MultiRaffle", [
-      +args.subscriptionId,
+      args.subscriptionId,
       args.vrfCoordinatorAddress,
       args.keyHash,
       args.callbackGasLimit,
     ]);
-    return { raffleContract, mockVRFCoordinatorV2_5Contract };
+    return { raffleContract };
   }
 
   console.log("Deploy localhost mode ...");
+
+  const { mockVRFCoordinatorV2_5Contract } = m.useModule(
+    MockVRFCoordinatorV2_5
+  );
+
   const createSubscription = m.call(
     mockVRFCoordinatorV2_5Contract,
     "createSubscription",

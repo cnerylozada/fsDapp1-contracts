@@ -16,7 +16,7 @@ error Raffle__SendMoreToEnterRaffle();
 error Raffle_NotAvailable();
 
 contract MultiRaffle is VRFConsumerBaseV2Plus {
-    uint256 private s_subscriptionId;
+    uint private s_subscriptionId;
     bytes32 private s_keyHash;
     uint32 private s_callbackGasLimit;
 
@@ -31,7 +31,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     event WinnerPickedByRaffleId(uint raffleId, address winner);
 
     constructor(
-        uint256 subscriptionId,
+        uint subscriptionId,
         address vrfCoordinator,
         bytes32 keyHash,
         uint32 callbackGasLimit
@@ -94,7 +94,7 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         if (raffle.state != RaffleLibrary.RaffleState.OPEN)
             revert Raffle_NotAvailable();
 
-        uint256 requestId = s_vrfCoordinator.requestRandomWords(
+        uint requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
                 subId: s_subscriptionId,
@@ -114,8 +114,8 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     }
 
     function fulfillRandomWords(
-        uint256 requestId,
-        uint256[] calldata randomWords
+        uint requestId,
+        uint[] calldata randomWords
     ) internal override {
         uint raffleId = s_requestIdToRaffleId[requestId];
         address payable[] memory participants = s_raffleIdToParticipants[
