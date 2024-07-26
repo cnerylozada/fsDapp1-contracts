@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
 import {RaffleLibrary} from "./RaffleLibrary.sol";
 
@@ -15,14 +16,24 @@ error Raffle__MaxNumParticipants();
 error Raffle__SendMoreToEnterRaffle();
 error Raffle_NotAvailable();
 
-contract MultiRaffle is VRFConsumerBaseV2Plus {
+contract MultiRaffle is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
+    function searchRaffleById(
+        uint256 _raffleId,
+        RaffleLibrary.Raffle[] memory _raffleList
+    ) public pure returns (RaffleLibrary.Raffle memory) {
+        RaffleLibrary.Raffle memory raffle;
+        for (uint256 i = 0; i < _raffleList.length; i++) {
+            RaffleLibrary.Raffle memory raffleItem = _raffleList[i];
+            if (raffleItem.id == _raffleId) raffle = raffleItem;
+        }
+        return raffle;
+    }
+
     uint private s_subscriptionId;
     bytes32 private s_keyHash;
     uint32 private s_callbackGasLimit;
 
-    uint private s_raffleIterator = 1;
-    mapping(uint => address) public s_raffleIdToOwner;
-    mapping(uint => RaffleLibrary.Raffle) private s_raffleIdToRaffleDetail;
+    RaffleLibrary.Raffle[] public s_raffleDetailList;
     mapping(uint => address payable[]) public s_raffleIdToParticipants;
     mapping(uint => uint) private s_requestIdToRaffleId;
     mapping(uint => uint) private s_raffleIdToWinnerIndex;
@@ -49,73 +60,105 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
         if (_numberOfTickets > RaffleLibrary.MAX_NUM_PARTICIPANTS)
             revert Raffle__MaxNumParticipants();
 
-        uint currentIterator = s_raffleIterator;
-        s_raffleIdToOwner[currentIterator] = msg.sender;
-        s_raffleIdToRaffleDetail[currentIterator] = RaffleLibrary.Raffle({
-            id: currentIterator,
+        uint raffleSize = s_raffleDetailList.length;
+        RaffleLibrary.Raffle memory newRaffle = RaffleLibrary.Raffle({
+            id: raffleSize + 1,
+            owner: msg.sender,
             feeInETH: _feeInETH,
-            secondsToStart: _secondsToStart,
             state: RaffleLibrary.RaffleState.OPEN,
-            numberOfTickets: _numberOfTickets
+            numberOfTickets: _numberOfTickets,
+            lastTimeStamp: block.timestamp,
+            secondsToStart: _secondsToStart
         });
-        s_raffleIterator = currentIterator + 1;
+        s_raffleDetailList.push(newRaffle);
     }
 
     function purchaseTicketByRaffleId(uint _raffleId) external payable {
-        if (s_raffleIdToOwner[_raffleId] == address(0))
-            revert Raffle__NoCreated(_raffleId);
+        RaffleLibrary.Raffle memory raffle = searchRaffleById(
+            _raffleId,
+            s_raffleDetailList
+        );
+        if (raffle.id == 0) revert Raffle__NoCreated(_raffleId);
 
-        RaffleLibrary.Raffle memory raffleDetail = s_raffleIdToRaffleDetail[
-            _raffleId
-        ];
-        if (raffleDetail.state != RaffleLibrary.RaffleState.OPEN)
+        if (raffle.state != RaffleLibrary.RaffleState.OPEN)
             revert Raffle_NotAvailable();
-        if (raffleDetail.feeInETH > msg.value)
-            revert Raffle__SendMoreToEnterRaffle();
+        if (raffle.feeInETH > msg.value) revert Raffle__SendMoreToEnterRaffle();
 
         uint numParticipants = s_raffleIdToParticipants[_raffleId].length;
-        if (numParticipants == raffleDetail.numberOfTickets)
+        if (numParticipants == raffle.numberOfTickets)
             revert Raffle__MaxNumParticipants();
 
         s_raffleIdToParticipants[_raffleId].push(payable(msg.sender));
     }
 
-    function startRaffleById(uint _raffleId) external {
-        if (s_raffleIdToOwner[_raffleId] == address(0))
-            revert Raffle__NoCreated(_raffleId);
-        if (s_raffleIdToParticipants[_raffleId].length == 0)
-            revert Raffle__NoParticipantsCreated(_raffleId);
-        if (s_raffleIdToOwner[_raffleId] != msg.sender)
-            revert Raffle__OnlyOwner(_raffleId);
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
+        external
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory performData)
+    {
+        uint counter;
+        for (uint i = 0; i < s_raffleDetailList.length; i++) {
+            RaffleLibrary.Raffle memory raffleItem = s_raffleDetailList[i];
+            if (
+                (raffleItem.state == RaffleLibrary.RaffleState.OPEN) &&
+                (block.timestamp - raffleItem.lastTimeStamp >
+                    raffleItem.secondsToStart)
+            ) {
+                counter = counter + 1;
+            }
+        }
 
-        RaffleLibrary.Raffle memory raffle = s_raffleIdToRaffleDetail[
-            _raffleId
-        ];
-        if (raffle.state != RaffleLibrary.RaffleState.OPEN)
-            revert Raffle_NotAvailable();
+        uint[] memory raffleIndexes = new uint[](counter);
+        uint indexCounter;
+        upkeepNeeded = false;
+        for (uint i = 0; i < s_raffleDetailList.length; i++) {
+            RaffleLibrary.Raffle memory raffleItem = s_raffleDetailList[i];
+            if (
+                (raffleItem.state == RaffleLibrary.RaffleState.OPEN) &&
+                (block.timestamp - raffleItem.lastTimeStamp >
+                    raffleItem.secondsToStart)
+            ) {
+                upkeepNeeded = true;
+                raffleIndexes[indexCounter] = i;
+                indexCounter = indexCounter + 1;
+            }
+        }
+        performData = abi.encode(raffleIndexes);
+        return (upkeepNeeded, performData);
+    }
 
-        uint requestId = s_vrfCoordinator.requestRandomWords(
-            VRFV2PlusClient.RandomWordsRequest({
-                keyHash: s_keyHash,
-                subId: s_subscriptionId,
-                requestConfirmations: RaffleLibrary.REQUEST_CONFIRMATIONS,
-                callbackGasLimit: s_callbackGasLimit,
-                numWords: RaffleLibrary.NUM_WORDS,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
-            })
-        );
-        s_requestIdToRaffleId[requestId] = _raffleId;
+    function performUpkeep(bytes calldata performData) external override {
+        uint256[] memory raffleIndexes = abi.decode(performData, (uint256[]));
 
-        raffle.state = RaffleLibrary.RaffleState.CALCULATING;
-        s_raffleIdToRaffleDetail[_raffleId] = raffle;
-        emit RequestIdByRaffleId(_raffleId, requestId);
+        for (uint i = 0; i < raffleIndexes.length; i++) {
+            uint raffleId = raffleIndexes[i];
+            RaffleLibrary.Raffle memory raffle = s_raffleDetailList[raffleId];
+            uint requestId = s_vrfCoordinator.requestRandomWords(
+                VRFV2PlusClient.RandomWordsRequest({
+                    keyHash: s_keyHash,
+                    subId: s_subscriptionId,
+                    requestConfirmations: RaffleLibrary.REQUEST_CONFIRMATIONS,
+                    callbackGasLimit: s_callbackGasLimit,
+                    numWords: RaffleLibrary.NUM_WORDS,
+                    extraArgs: VRFV2PlusClient._argsToBytes(
+                        VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                    )
+                })
+            );
+            s_requestIdToRaffleId[requestId] = raffleId;
+
+            raffle.state = RaffleLibrary.RaffleState.CALCULATING;
+            s_raffleDetailList[raffleId] = raffle;
+            emit RequestIdByRaffleId(raffleId, requestId);
+        }
     }
 
     function fulfillRandomWords(
-        uint requestId,
-        uint[] calldata randomWords
+        uint256 requestId,
+        uint256[] calldata randomWords
     ) internal override {
         uint raffleId = s_requestIdToRaffleId[requestId];
         address payable[] memory participants = s_raffleIdToParticipants[
@@ -127,11 +170,9 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     }
 
     function awardWinnerByRafleId(uint _raffleId, uint _winnerIndex) private {
-        RaffleLibrary.Raffle memory raffle = s_raffleIdToRaffleDetail[
-            _raffleId
-        ];
+        RaffleLibrary.Raffle memory raffle = s_raffleDetailList[_raffleId];
         raffle.state = RaffleLibrary.RaffleState.CLOSED;
-        s_raffleIdToRaffleDetail[_raffleId] = raffle;
+        s_raffleDetailList[_raffleId] = raffle;
 
         address payable[] memory participants = s_raffleIdToParticipants[
             _raffleId
@@ -146,12 +187,11 @@ contract MultiRaffle is VRFConsumerBaseV2Plus {
     function getWinnerByRaffleId(
         uint _raffleId
     ) external view returns (address) {
-        if (s_raffleIdToOwner[_raffleId] == address(0))
-            revert Raffle__NoCreated(_raffleId);
-
-        RaffleLibrary.Raffle memory raffle = s_raffleIdToRaffleDetail[
-            _raffleId
-        ];
+        RaffleLibrary.Raffle memory raffle = searchRaffleById(
+            _raffleId,
+            s_raffleDetailList
+        );
+        if (raffle.id == 0) revert Raffle__NoCreated(_raffleId);
 
         if (raffle.state == RaffleLibrary.RaffleState.OPEN)
             revert Raffle__RandomNotCalled(_raffleId);

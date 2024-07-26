@@ -15,9 +15,23 @@ library RaffleLibrary {
 
     struct Raffle {
         uint id;
+        address owner;
         uint feeInETH;
-        uint secondsToStart;
         uint numberOfTickets;
         RaffleState state;
+        uint lastTimeStamp;
+        uint secondsToStart;
     }
+
+    // function searchRaffleById(
+    //     uint256 _raffleId,
+    //     Raffle[] memory _raffleList
+    // ) public pure returns (Raffle memory) {
+    //     Raffle memory raffle;
+    //     for (uint256 i = 0; i < _raffleList.length; i++) {
+    //         Raffle memory raffleItem = _raffleList[i];
+    //         if (raffleItem.id == _raffleId) raffle = raffleItem;
+    //     }
+    //     return raffle;
+    // }
 }
