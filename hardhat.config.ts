@@ -1,8 +1,46 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox-viem";
+import dotenv from "dotenv";
+import { CHAINID } from "./utils";
+dotenv.config();
+
+const ALCHEMY_ETHEREUM_SEPOLIA = process.env.ALCHEMY_ETHEREUM_SEPOLIA!;
+const ALCHEMY_OPTIMISM_SEPOLIA = process.env.ALCHEMY_OPTIMISM_SEPOLIA!;
+
+const MAIN_DEPLOYER_PRIVATE_KEY = process.env.MAIN_DEPLOYER_PRIVATE_KEY!;
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY!;
+const OPTIMISM_ETHERSCAN_API_KEY = process.env.OPTIMISM_ETHERSCAN_API_KEY!;
 
 const config: HardhatUserConfig = {
   solidity: "0.8.28",
+  networks: {
+    sepolia: {
+      url: ALCHEMY_ETHEREUM_SEPOLIA,
+      accounts: [MAIN_DEPLOYER_PRIVATE_KEY],
+      chainId: CHAINID.SEPOLIA,
+    },
+    opSepolia: {
+      url: ALCHEMY_OPTIMISM_SEPOLIA,
+      accounts: [MAIN_DEPLOYER_PRIVATE_KEY],
+      chainId: CHAINID.OPTIMISMSEPOLIA,
+    },
+  },
+  etherscan: {
+    apiKey: {
+      sepolia: ETHERSCAN_API_KEY,
+      opSepolia: OPTIMISM_ETHERSCAN_API_KEY,
+    },
+    customChains: [
+      {
+        network: "opSepolia",
+        chainId: CHAINID.OPTIMISMSEPOLIA,
+        urls: {
+          apiURL: "https://api-sepolia-optimistic.etherscan.io/api",
+          browserURL: "https://sepolia-optimism.etherscan.io/",
+        },
+      },
+    ],
+  },
 };
 
 export default config;

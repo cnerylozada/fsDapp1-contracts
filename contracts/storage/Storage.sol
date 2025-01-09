@@ -24,6 +24,10 @@ contract Storage {
         emit NewStudentAdded(_name, _level);
     }
 
+    function getCourse() external view returns (string memory) {
+        return s_course;
+    }
+
     function getStudentByIndex(
         uint _index
     ) external view returns (Utils.Student memory) {
