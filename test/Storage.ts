@@ -26,4 +26,27 @@ describe("Storage", function () {
       expect(await storageContract.read.getCourse()).to.equal(_course);
     });
   });
+
+  describe("Adding new student", function () {
+    it("should emit an event when new student is added", async function () {
+      const { storageContract } = await loadFixture(deployStorageContract);
+
+      const _name = "cristh";
+      await storageContract.write.addNewStudent([_name, 0]);
+      const newStudentAddedEvents =
+        await storageContract.getEvents.NewStudentAdded();
+      expect(newStudentAddedEvents).to.have.lengthOf(1);
+      expect(newStudentAddedEvents[0].args._name).to.equal(_name);
+    });
+
+    it("should store new student data", async function () {
+      const { storageContract } = await loadFixture(deployStorageContract);
+
+      const _name = "cristh";
+      await storageContract.write.addNewStudent([_name, 0]);
+      const index = BigInt(0);
+      const student = await storageContract.read.getStudentByIndex([index]);
+      expect(student.name).to.equal(_name);
+    });
+  });
 });
