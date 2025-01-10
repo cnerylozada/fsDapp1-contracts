@@ -3,11 +3,13 @@ import { network } from "hardhat";
 import { CHAINID } from "../../utils";
 
 const StorageModule = buildModule("StorageModule", (m) => {
-  let _course = "science";
   const currentNetwork = network.config.chainId;
-  if (currentNetwork === CHAINID.SEPOLIA) _course = "science_sepolia";
-  if (currentNetwork === CHAINID.OPTIMISMSEPOLIA) _course = "science_opSepolia";
+  let courseName = "default_course";
+  if (currentNetwork === CHAINID.SEPOLIA) courseName = "science_sepolia";
+  if (currentNetwork === CHAINID.OPTIMISMSEPOLIA)
+    courseName = "science_opSepolia";
 
+  const _course = m.getParameter("_course", courseName);
   const storageContract = m.contract("Storage", [_course]);
   return { storageContract };
 });
