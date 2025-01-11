@@ -2,6 +2,7 @@ import { ignition, viem } from "hardhat";
 import FundMeModule from "../ignition/modules/FundMe";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
+import { parseEther } from "viem";
 
 describe("FunMe", function () {
   async function deployFundMeContract() {
@@ -10,11 +11,13 @@ describe("FunMe", function () {
     const { fundMeContract } = await ignition.deploy(FundMeModule, {
       parameters: { FundMeModule: { _minAmountInUSD } },
     });
+    const publicClient = await viem.getPublicClient();
     return {
       _minAmountInUSD,
       fundMeContract,
       owner,
       addr1,
+      publicClient,
     };
   }
   describe("Deployment", function () {
@@ -25,6 +28,22 @@ describe("FunMe", function () {
       expect(await fundMeContract.read.getMinAmountInUSD()).to.equal(
         _minAmountInUSD
       );
+    });
+  });
+
+  describe("fund method", function () {
+    it("should update the contract balance if ETH are sent", async function () {
+      const { fundMeContract, publicClient } = await loadFixture(
+        deployFundMeContract
+      );
+      const amountToSend = parseEther("0.0015");
+      await fundMeContract.write.fund({ value: amountToSend });
+      expect(
+        await publicClient.getBalance({
+          address: fundMeContract.address,
+        })
+      ).to.equal(amountToSend);
+      expect(await fundMeContract.read.getBalance()).to.equal(amountToSend);
     });
   });
 });

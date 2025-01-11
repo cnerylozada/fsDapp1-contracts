@@ -13,4 +13,8 @@ contract FundMe {
     function getMinAmountInUSD() external view returns (uint) {
         return MIN_AMOUNT_IN_USD;
     }
+
+    function getBalance() external view returns (uint) {
+        return address(this).balance;
+    }
 }
