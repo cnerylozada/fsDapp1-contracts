@@ -45,5 +45,12 @@ describe("FunMe", function () {
       ).to.equal(amountToSend);
       expect(await fundMeContract.read.getBalance()).to.equal(amountToSend);
     });
+
+    it("asd", async function () {
+      const { fundMeContract } = await loadFixture(deployFundMeContract);
+      await expect(
+        fundMeContract.write.fund({ value: BigInt(4) })
+      ).to.be.rejectedWith("FundMe_NotEnoughFunds");
+    });
   });
 });
