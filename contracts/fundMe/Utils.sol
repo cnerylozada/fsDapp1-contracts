@@ -5,8 +5,18 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 library Utils {
     function getChainlinkDataFeedLatestAnswer(
         AggregatorV3Interface _dataFeed
-    ) internal view returns (int) {
+    ) internal view returns (uint) {
         (, int answer, , , ) = _dataFeed.latestRoundData();
-        return answer;
+        return uint(answer);
+    }
+
+    function convertETHToUSD(
+        uint _amount,
+        AggregatorV3Interface _dataFeed,
+        int _priceFeedDecimals
+    ) internal view returns (uint) {
+        uint rawUSDAmount = (_amount *
+            getChainlinkDataFeedLatestAnswer(_dataFeed)) / 1e18;
+        return rawUSDAmount / 10 ** uint(_priceFeedDecimals);
     }
 }

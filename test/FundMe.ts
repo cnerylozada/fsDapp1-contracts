@@ -36,7 +36,7 @@ describe("FunMe", function () {
       const { fundMeContract, publicClient } = await loadFixture(
         deployFundMeContract
       );
-      const amountToSend = parseEther("0.0015");
+      const amountToSend = parseEther("0.0016");
       await fundMeContract.write.fund({ value: amountToSend });
       expect(
         await publicClient.getBalance({
@@ -46,10 +46,10 @@ describe("FunMe", function () {
       expect(await fundMeContract.read.getBalance()).to.equal(amountToSend);
     });
 
-    it("asd", async function () {
+    it("should revert when amount is less than minimum", async function () {
       const { fundMeContract } = await loadFixture(deployFundMeContract);
       await expect(
-        fundMeContract.write.fund({ value: BigInt(4) })
+        fundMeContract.write.fund({ value: parseEther("0.0012") })
       ).to.be.rejectedWith("FundMe_NotEnoughFunds");
     });
   });

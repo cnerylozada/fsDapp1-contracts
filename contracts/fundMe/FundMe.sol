@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {Utils} from "./Utils.sol";
 
 error FundMe_NotEnoughFunds();
 
 contract FundMe {
+    using Utils for uint;
+
     uint immutable MIN_AMOUNT_IN_USD;
     address immutable PRICE_FEED_ADDRESS;
     int immutable s_priceFeedDecimals;
@@ -22,7 +25,11 @@ contract FundMe {
     }
 
     function fund() external payable {
-        if (msg.value < MIN_AMOUNT_IN_USD) revert FundMe_NotEnoughFunds();
+        uint fundToUSD = msg.value.convertETHToUSD(
+            s_dataFeed,
+            s_priceFeedDecimals
+        );
+        if (fundToUSD < MIN_AMOUNT_IN_USD) revert FundMe_NotEnoughFunds();
     }
 
     function getMinAmountInUSD() external view returns (uint) {
