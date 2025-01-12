@@ -6,11 +6,19 @@ error FundMe_NotEnoughFunds();
 
 contract FundMe {
     uint immutable MIN_AMOUNT_IN_USD;
-    AggregatorV3Interface internal dataFeed;
+    address immutable PRICE_FEED_ADDRESS;
+    int immutable s_priceFeedDecimals;
+    AggregatorV3Interface internal s_dataFeed;
 
-    constructor(uint _minAmountInUsd, address _priceFeedAddress) {
+    constructor(
+        uint _minAmountInUsd,
+        address _priceFeedAddress,
+        int _priceFeedDecimals
+    ) {
         MIN_AMOUNT_IN_USD = _minAmountInUsd;
-        dataFeed = AggregatorV3Interface(_priceFeedAddress);
+        PRICE_FEED_ADDRESS = _priceFeedAddress;
+        s_priceFeedDecimals = _priceFeedDecimals;
+        s_dataFeed = AggregatorV3Interface(_priceFeedAddress);
     }
 
     function fund() external payable {
@@ -19,6 +27,10 @@ contract FundMe {
 
     function getMinAmountInUSD() external view returns (uint) {
         return MIN_AMOUNT_IN_USD;
+    }
+
+    function getPriceFeedAddress() external view returns (address) {
+        return PRICE_FEED_ADDRESS;
     }
 
     function getBalance() external view returns (uint) {

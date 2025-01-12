@@ -13,7 +13,11 @@ const OPTIMISM_ETHERSCAN_API_KEY = process.env.OPTIMISM_ETHERSCAN_API_KEY!;
 
 const config: HardhatUserConfig = {
   solidity: "0.8.28",
+  defaultNetwork: "hardhat",
   networks: {
+    hardhat: {
+      chainId: CHAINID.HARDHAT,
+    },
     sepolia: {
       url: ALCHEMY_ETHEREUM_SEPOLIA,
       accounts: [MAIN_DEPLOYER_PRIVATE_KEY],

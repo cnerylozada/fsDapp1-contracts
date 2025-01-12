@@ -1,5 +1,5 @@
 import { ignition, viem } from "hardhat";
-import FundMeModule from "../ignition/modules/FundMe";
+import FundMeModule from "../ignition/modules/fundMe/FundMe";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import { parseEther } from "viem";
