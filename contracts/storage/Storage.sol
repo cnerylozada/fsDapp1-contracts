@@ -30,7 +30,8 @@ contract Storage {
 
     function getStudentByIndex(
         uint _index
-    ) external view returns (Utils.Student memory) {
-        return s_students[_index];
+    ) external view returns (string memory, Utils.StudentLevel) {
+        Utils.Student memory student = s_students[_index];
+        return (student.name, student.level);
     }
 }

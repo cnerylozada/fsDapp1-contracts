@@ -46,7 +46,8 @@ describe("Storage", function () {
       await storageContract.write.addNewStudent([_name, 0]);
       const index = BigInt(0);
       const student = await storageContract.read.getStudentByIndex([index]);
-      expect(student.name).to.equal(_name);
+      const [studenName] = student;
+      expect(studenName).to.equal(_name);
     });
   });
 });
