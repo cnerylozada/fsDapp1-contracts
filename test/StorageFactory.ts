@@ -28,14 +28,33 @@ describe("StorageFactory", function () {
         deployStorageFactoryContract
       );
       const _courseName = "math 101";
-
       await storageFactoryContract.write.createStorage([_courseName]);
+
       const newContractCreatedEvents =
         await storageFactoryContract.getEvents.NewContractCreated();
 
       const lastAddressAdded = newContractCreatedEvents[0].args._address;
       const addressList = await storageFactoryContract.read.getAddressList();
       expect(lastAddressAdded).to.equal(addressList[0]);
+    });
+  });
+
+  describe("Storage contract from factory", function () {
+    it("it should return the same course name setted in the contructor", async function () {
+      const { storageFactoryContract } = await loadFixture(
+        deployStorageFactoryContract
+      );
+
+      const _courseName = "math 101";
+      await storageFactoryContract.write.createStorage([_courseName]);
+
+      const addressList = await storageFactoryContract.read.getAddressList();
+      const lastAddressAdded = addressList[0];
+      const storageContract = await viem.getContractAt(
+        "Storage",
+        lastAddressAdded
+      );
+      expect(await storageContract.read.getCourse()).to.equal(_courseName);
     });
   });
 });
