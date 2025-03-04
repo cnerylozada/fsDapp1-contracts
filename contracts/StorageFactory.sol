@@ -3,12 +3,16 @@ pragma solidity ^0.8.28;
 import {Storage} from "./storage/Storage.sol";
 
 contract StorageFactory {
-    uint s_currentIndex = 0;
-    mapping(uint => address) s_indexToAddress;
+    address[] private s_contractAddresses;
 
-    function createStorage(string calldata _course) external {
+    function createStorage(string calldata _course) external returns (address) {
         Storage storageContract = new Storage(_course);
-        s_indexToAddress[s_currentIndex] = address(storageContract);
-        s_currentIndex++;
+        address newAddress = address(storageContract);
+        s_contractAddresses.push(newAddress);
+        return newAddress;
+    }
+
+    function getAddressList() external view returns (address[] memory) {
+        return s_contractAddresses;
     }
 }

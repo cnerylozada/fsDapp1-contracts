@@ -5,9 +5,11 @@ import {Utils} from "./Utils.sol";
 contract Storage {
     string private s_course;
     Utils.Student[] private s_students;
+    uint s_creationDate;
 
     constructor(string memory _course) {
         s_course = _course;
+        s_creationDate = block.timestamp;
     }
 
     event NewStudentAdded(string _name, Utils.StudentLevel _level);
@@ -26,6 +28,10 @@ contract Storage {
 
     function getCourse() external view returns (string memory) {
         return s_course;
+    }
+
+    function getCreationDate() external view returns (uint) {
+        return s_creationDate;
     }
 
     function getStudentByIndex(
