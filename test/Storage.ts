@@ -23,7 +23,8 @@ describe("Storage", function () {
       const { storageContract, _course } = await loadFixture(
         deployStorageContract
       );
-      expect(await storageContract.read.getCourse()).to.equal(_course);
+      const [course] = await storageContract.read.getMetadata();
+      expect(course).to.equal(_course);
     });
   });
 

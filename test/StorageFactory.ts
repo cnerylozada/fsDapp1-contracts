@@ -54,7 +54,8 @@ describe("StorageFactory", function () {
         "Storage",
         lastAddressAdded
       );
-      expect(await storageContract.read.getCourse()).to.equal(_courseName);
+      const [course] = await storageContract.read.getMetadata();
+      expect(course).to.equal(_courseName);
     });
   });
 });

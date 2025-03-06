@@ -26,12 +26,8 @@ contract Storage {
         emit NewStudentAdded(_name, _level);
     }
 
-    function getCourse() external view returns (string memory) {
-        return s_course;
-    }
-
-    function getCreationDate() external view returns (uint) {
-        return s_creationDate;
+    function getMetadata() external view returns (string memory, uint) {
+        return (s_course, s_creationDate);
     }
 
     function getStudentByIndex(
