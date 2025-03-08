@@ -2,6 +2,7 @@ export enum CHAINID {
   OPTIMISMSEPOLIA = 11155420,
   SEPOLIA = 11155111,
   HARDHAT = 31337,
+  ARBITRUMSEPOLIA = 421614,
 }
 
 export const chainlinkPriceFeed = {
