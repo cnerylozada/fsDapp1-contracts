@@ -19,6 +19,11 @@ export const chainlinkPriceFeed = {
         decimals: 8,
       },
       {
+        chainId: CHAINID.ARBITRUMSEPOLIA,
+        address: "0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165",
+        decimals: 8,
+      },
+      {
         chainId: CHAINID.SEPOLIA,
         address: `0x694AA1769357215DE4FAC081bf1f309aDC325306`,
         decimals: 8,

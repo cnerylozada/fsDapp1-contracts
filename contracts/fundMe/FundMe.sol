@@ -27,7 +27,7 @@ contract FundMe {
         s_dataFeed = AggregatorV3Interface(_priceFeedAddress);
     }
 
-    event NewFund(uint _amount);
+    event NewFunder(address _address, uint _amount, uint _createdAt);
 
     function fund() external payable {
         uint fundToUSD = msg.value.convertETHToUSD(
@@ -35,7 +35,7 @@ contract FundMe {
             s_priceFeedDecimals
         );
         if (fundToUSD < MIN_AMOUNT_IN_USD) revert FundMe_NotEnoughFunds();
-        emit NewFund(msg.value);
+        emit NewFunder(msg.sender, msg.value, block.timestamp);
     }
 
     function getMinAmountInUSD() external view returns (uint) {
