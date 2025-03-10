@@ -14,7 +14,9 @@ const FundMeModule = buildModule("FundMeModule", (m) => {
     (_) => _.chainId === currentChainId
   )[0];
 
+  const account1 = m.getAccount(0);
   const fundMeContract = m.contract("FundMe", [
+    account1,
     _minAmountInUSD,
     currentChainId === CHAINID.HARDHAT
       ? mockV3AggregatorContract

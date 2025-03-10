@@ -16,11 +16,12 @@ contract FundMe {
     AggregatorV3Interface internal s_dataFeed;
 
     constructor(
+        address _owner,
         uint _minAmountInUsd,
         address _priceFeedAddress,
         int _priceFeedDecimals
     ) {
-        s_owner = msg.sender;
+        s_owner = _owner;
         MIN_AMOUNT_IN_USD = _minAmountInUsd;
         PRICE_FEED_ADDRESS = _priceFeedAddress;
         s_priceFeedDecimals = _priceFeedDecimals;
@@ -48,6 +49,10 @@ contract FundMe {
 
     function getBalance() external view returns (uint) {
         return address(this).balance;
+    }
+
+    function getOwner() external view returns (address) {
+        return s_owner;
     }
 
     modifier onlyOwner() {

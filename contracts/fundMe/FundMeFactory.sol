@@ -21,6 +21,7 @@ contract FundMeFactory {
         int _priceFeedDecimals
     ) external {
         FundMe fundMe = new FundMe(
+            msg.sender,
             _minAmountInUsd,
             _priceFeedAddress,
             _priceFeedDecimals
