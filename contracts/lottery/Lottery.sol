@@ -2,19 +2,21 @@
 pragma solidity ^0.8.28;
 
 contract Lottery {
-    address immutable s_owner;
-    uint immutable s_prize;
+    address immutable i_owner;
+    uint immutable i_prize;
+    uint immutable i_numTickets;
+    uint immutable i_ticketPrice;
 
-    constructor(address _owner, uint _prize) {
-        s_owner = _owner;
-        s_prize = _prize;
+    constructor(address _owner, uint _numTickets, uint _ticketPrice) payable {
+        i_owner = _owner;
+        i_prize = msg.value;
+        i_numTickets = _numTickets;
+        i_ticketPrice = _ticketPrice;
     }
 
-    function getOwner() external view returns (address) {
-        return s_owner;
-    }
+    function purchaseTicket() external payable {}
 
     function getPrize() external view returns (uint) {
-        return s_prize;
+        return i_prize;
     }
 }
