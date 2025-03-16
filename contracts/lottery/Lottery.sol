@@ -16,6 +16,10 @@ contract Lottery {
 
     function purchaseTicket() external payable {}
 
+    function getOwner() external view returns (address) {
+        return i_owner;
+    }
+
     function getPrize() external view returns (uint) {
         return i_prize;
     }

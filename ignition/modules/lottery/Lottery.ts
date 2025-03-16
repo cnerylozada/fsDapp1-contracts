@@ -2,17 +2,17 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { parseEther } from "viem";
 
 const LotteryModule = buildModule("LotteryModule", (m) => {
-  const _mainDeployer = m.getAccount(0);
-  const _numTickets = 3;
-  const _ticketPrice = parseEther("0.001");
+  const mainDeployer = m.getParameter("mainDeployer", m.getAccount(0));
+  const numTickets = m.getParameter("numTickets", 3);
+  const ticketPrice = m.getParameter("ticketPrice", parseEther("0.001"));
 
-  const _prize = parseEther("0.00375");
+  const prize = m.getParameter("prize", parseEther("0.00375"));
 
   const lotteryContract = m.contract(
     "Lottery",
-    [_mainDeployer, _numTickets, _ticketPrice],
+    [mainDeployer, numTickets, ticketPrice],
     {
-      value: _prize,
+      value: prize,
     }
   );
   return { lotteryContract };
