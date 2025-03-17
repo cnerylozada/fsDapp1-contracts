@@ -19,6 +19,14 @@ contract Lottery is VRFConsumerBaseV2Plus {
 
     error NotEnoughFund();
     error TicketsSoldOut();
+    error LotteryNotAllowed();
+
+    enum LotteryState {
+        INIT,
+        PROCESSING,
+        FINISHED
+    }
+    LotteryState s_state = LotteryState.INIT;
 
     constructor(
         address _owner,
@@ -40,10 +48,12 @@ contract Lottery is VRFConsumerBaseV2Plus {
     function purchaseTicket() external payable {
         if (s_participants.length == i_numTickets) revert TicketsSoldOut();
         if (msg.value < i_ticketPrice) revert NotEnoughFund();
+        if (s_state != LotteryState.INIT) revert LotteryNotAllowed();
         s_participants.push(msg.sender);
     }
 
     function requestWinner() public returns (uint256 requestId) {
+        if (s_state != LotteryState.INIT) revert LotteryNotAllowed();
         requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
@@ -56,6 +66,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
                 )
             })
         );
+        s_state = LotteryState.PROCESSING;
     }
 
     function fulfillRandomWords(
@@ -63,6 +74,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
         uint256[] calldata randomWords
     ) internal override {
         s_winnerIndex = randomWords[0] % i_numTickets;
+        s_state = LotteryState.FINISHED;
     }
 
     function getOwner() external view returns (address) {
@@ -78,6 +90,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
     }
 
     function getWinner() external view returns (address) {
+        if (s_state == LotteryState.PROCESSING) revert LotteryNotAllowed();
         return s_participants[s_winnerIndex];
     }
 }
