@@ -1,7 +1,7 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox-viem";
 import dotenv from "dotenv";
-import { CHAINID } from "./utils";
+import { CHAINID } from "./utils/utils";
 dotenv.config();
 
 const ALCHEMY_ETHEREUM_SEPOLIA = process.env.ALCHEMY_ETHEREUM_SEPOLIA!;

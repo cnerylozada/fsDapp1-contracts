@@ -1,6 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { network } from "hardhat";
-import { CHAINID } from "../../utils";
+import { CHAINID } from "../../utils/utils";
 
 const StorageModule = buildModule("StorageModule", (m) => {
   const currentNetwork = network.config.chainId;

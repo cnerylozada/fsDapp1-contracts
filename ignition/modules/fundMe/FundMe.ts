@@ -1,7 +1,8 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { network } from "hardhat";
-import { CHAINID, chainlinkPriceFeed } from "../../../utils";
+import { CHAINID } from "../../../utils/utils";
 import MockV3AggregatorModule from "./MockV3Aggregator";
+import { chainlinkPriceFeed } from "../../../utils/chainlink";
 
 const FundMeModule = buildModule("FundMeModule", (m) => {
   const currentChainId = network.config.chainId;

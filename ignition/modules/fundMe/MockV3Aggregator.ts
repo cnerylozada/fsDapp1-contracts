@@ -1,5 +1,6 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
-import { CHAINID, chainlinkPriceFeed } from "../../../utils";
+import { CHAINID } from "../../../utils/utils";
+import { chainlinkPriceFeed } from "../../../utils/chainlink";
 
 const MockV3AggregatorModule = buildModule("MockV3Aggregator", (m) => {
   const mockDecimals = chainlinkPriceFeed.ETH.USD.filter(
