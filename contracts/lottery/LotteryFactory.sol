@@ -15,19 +15,26 @@ contract LotteryFactory {
     );
 
     function createLottery(
-        string calldata _title,
-        string calldata _description,
+        string memory _title,
+        string memory _description,
         uint _numTickets,
-        uint _ticketPrice
+        uint _ticketPrice,
+        address _vrfCoordinator,
+        uint _subscriptionId,
+        bytes32 _keyHash
     ) external payable {
         uint prize = msg.value;
         address owner = msg.sender;
         Lottery newLottery = new Lottery{value: prize}(
             owner,
             _numTickets,
-            _ticketPrice
+            _ticketPrice,
+            _vrfCoordinator,
+            _subscriptionId,
+            _keyHash
         );
         address contractAddress = address(newLottery);
+
         emit NewLottery(
             owner,
             contractAddress,

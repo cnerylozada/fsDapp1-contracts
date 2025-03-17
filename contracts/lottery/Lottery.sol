@@ -1,27 +1,68 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
+import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
-contract Lottery {
+contract Lottery is VRFConsumerBaseV2Plus {
     address immutable i_owner;
     uint immutable i_prize;
     uint immutable i_numTickets;
     uint immutable i_ticketPrice;
     address[] s_participants;
+    uint s_winnerIndex;
+
+    bytes32 immutable s_keyHash;
+    uint32 constant CALLBACK_GAS_LIMIT = 40000;
+    uint16 constant REQUEST_CONFIRMATIONS = 3;
+    uint32 constant NUM_WORDS = 1;
+    uint private immutable s_subscriptionId;
 
     error NotEnoughFund();
     error TicketsSoldOut();
 
-    constructor(address _owner, uint _numTickets, uint _ticketPrice) payable {
+    constructor(
+        address _owner,
+        uint _numTickets,
+        uint _ticketPrice,
+        address _vrfCoordinator,
+        uint _subscriptionId,
+        bytes32 _keyHash
+    ) payable VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_owner = _owner;
         i_prize = msg.value;
         i_numTickets = _numTickets;
         i_ticketPrice = _ticketPrice;
+
+        s_subscriptionId = _subscriptionId;
+        s_keyHash = _keyHash;
     }
 
     function purchaseTicket() external payable {
         if (s_participants.length == i_numTickets) revert TicketsSoldOut();
         if (msg.value < i_ticketPrice) revert NotEnoughFund();
         s_participants.push(msg.sender);
+    }
+
+    function requestWinner() public returns (uint256 requestId) {
+        requestId = s_vrfCoordinator.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: s_keyHash,
+                subId: s_subscriptionId,
+                requestConfirmations: REQUEST_CONFIRMATIONS,
+                callbackGasLimit: CALLBACK_GAS_LIMIT,
+                numWords: NUM_WORDS,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: true})
+                )
+            })
+        );
+    }
+
+    function fulfillRandomWords(
+        uint256 /*requestId*/,
+        uint256[] calldata randomWords
+    ) internal override {
+        s_winnerIndex = randomWords[0] % i_numTickets;
     }
 
     function getOwner() external view returns (address) {
@@ -34,5 +75,9 @@ contract Lottery {
 
     function getParticipants() external view returns (address[] memory) {
         return s_participants;
+    }
+
+    function getWinner() external view returns (address) {
+        return s_participants[s_winnerIndex];
     }
 }
