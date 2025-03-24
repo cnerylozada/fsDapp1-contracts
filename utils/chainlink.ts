@@ -29,25 +29,17 @@ export const chainlinkPriceFeed = {
 
 export const chainlinkVRFSupportedNetworks = [
   {
-    chainId: CHAINID.OPTIMISMSEPOLIA,
-    vrfCoordinator: `0x02667f44a6a44E4BDddCF80e724512Ad3426B17d`,
-    keyHash:
-      "0xc3d5bc4d5600fa71f7a50b9ad841f14f24f9ca4236fd00bdb5fda56b052b28a4",
-    subscriptionId:
-      "83697403553201561029298105597157576138702100655624205466322482523261656003262",
-  },
-  {
-    chainId: CHAINID.ARBITRUMSEPOLIA,
-    vrfCoordinator: "0x5CE8D5A2BC84beb22a398CCA51996F7930313D61",
-    keyHash:
-      "0x1770bdc7eec7771f7ba4ffd640f34260d7f095b79c92d34a5b2551d6f6cfd2be",
-    subscriptionId: "",
-  },
-  {
     chainId: CHAINID.SEPOLIA,
-    vrfCoordinator: `0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B`,
+    VRFCoordinator: `0x9DdfaCa8183c41ad55329BdeeD9F6A8d53168B1B`,
     keyHash:
       "0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae",
+    LINKToken: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+  },
+];
+
+export const chainlinkVRFSubscriptions = [
+  {
+    chainId: CHAINID.SEPOLIA,
     subscriptionId:
       "38066802737348792814143693604228425629159931338435451564623514457891355632766",
   },

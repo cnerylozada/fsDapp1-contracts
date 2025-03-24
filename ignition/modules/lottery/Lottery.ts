@@ -1,6 +1,9 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import { parseEther } from "viem";
-import { chainlinkVRFSupportedNetworks } from "../../../utils/chainlink";
+import {
+  chainlinkVRFSubscriptions,
+  chainlinkVRFSupportedNetworks,
+} from "../../../utils/chainlink";
 import { network } from "hardhat";
 
 const LotteryModule = buildModule("LotteryModule", (m) => {
@@ -11,10 +14,12 @@ const LotteryModule = buildModule("LotteryModule", (m) => {
   const prize = m.getParameter("prize", parseEther("0.00375"));
 
   const currentNetwork = network.config.chainId;
-  const { vrfCoordinator, keyHash, subscriptionId } =
-    chainlinkVRFSupportedNetworks.filter(
-      (_) => _.chainId === currentNetwork
-    )[0];
+  const { VRFCoordinator, keyHash } = chainlinkVRFSupportedNetworks.filter(
+    (_) => _.chainId === currentNetwork
+  )[0];
+  const { subscriptionId } = chainlinkVRFSubscriptions.filter(
+    (_) => _.chainId === currentNetwork
+  )[0];
 
   const lotteryContract = m.contract(
     "Lottery",
@@ -22,7 +27,7 @@ const LotteryModule = buildModule("LotteryModule", (m) => {
       mainDeployer,
       numTickets,
       ticketPrice,
-      vrfCoordinator,
+      VRFCoordinator,
       subscriptionId,
       keyHash,
     ],
