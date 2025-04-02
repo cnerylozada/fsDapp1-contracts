@@ -8,21 +8,27 @@ describe("Lottery", function () {
   async function deployLotteryFixture() {
     const [owner] = await viem.getWalletClients();
     const prize = parseEther("0.005");
-    const numTickets = 3;
-
-    const { lotteryContract } = await ignition.deploy(LotteryModule, {
-      parameters: {
-        LotteryModule: {
-          mainDeployer: owner.account.address,
-          numTickets,
-          prize,
-        },
-      },
-    });
-
+    const numTickets = 5;
     const publicClient = await viem.getPublicClient();
+    const { lotteryContract, VRFCoordinatorV2_5MockContract } =
+      await ignition.deploy(LotteryModule, {
+        parameters: {
+          LotteryModule: {
+            mainDeployer: owner.account.address,
+            numTickets,
+            prize,
+          },
+        },
+      });
 
-    return { lotteryContract, publicClient, owner, prize, numTickets };
+    return {
+      VRFCoordinatorV2_5MockContract,
+      lotteryContract,
+      publicClient,
+      owner,
+      prize,
+      numTickets,
+    };
   }
   describe("Deployment", async function () {
     it("should set storage variables", async function () {
@@ -54,6 +60,36 @@ describe("Lottery", function () {
       });
       const participants = await lotteryContract.read.getParticipants();
       expect(participants[0]).to.equal(getAddress(owner.account.address));
+    });
+  });
+
+  describe("Randomness", function () {
+    it("shouldl ...", async function () {
+      const { VRFCoordinatorV2_5MockContract, lotteryContract, numTickets } =
+        await loadFixture(deployLotteryFixture);
+
+      await lotteryContract.write.purchaseTicket({
+        value: parseEther("0.001"),
+      });
+      await lotteryContract.write.purchaseTicket({
+        value: parseEther("0.001"),
+      });
+      await lotteryContract.write.purchaseTicket({
+        value: parseEther("0.001"),
+      });
+
+      await lotteryContract.write.requestWinner();
+
+      const requestId = await lotteryContract.read.getRequestId();
+      await VRFCoordinatorV2_5MockContract.write.fulfillRandomWords([
+        requestId,
+        lotteryContract.address,
+      ]);
+
+      const randomWordEvent = await lotteryContract.getEvents.RandomWord();
+      const word = randomWordEvent[0].args._word;
+
+      const winnerAddress = await lotteryContract.read.getWinnerAddress();
     });
   });
 });

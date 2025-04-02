@@ -17,10 +17,10 @@ const LotteryModule = buildModule("LotteryModule", (m) => {
 
   const currentNetwork = network.config.chainId;
 
+  const { VRFCoordinatorV2_5MockContract } = m.useModule(
+    VRFCoordinatorMockModule
+  );
   if (currentNetwork === CHAINID.HARDHAT) {
-    const { VRFCoordinatorV2_5MockContract } = m.useModule(
-      VRFCoordinatorMockModule
-    );
     const callCreateSubscription = m.call(
       VRFCoordinatorV2_5MockContract,
       "createSubscription",
@@ -33,7 +33,7 @@ const LotteryModule = buildModule("LotteryModule", (m) => {
     );
     m.call(VRFCoordinatorV2_5MockContract, "fundSubscription", [
       subscriptionId,
-      parseEther("0.1"),
+      parseEther("100"),
     ]);
 
     const lotteryContract = m.contract(
@@ -54,7 +54,7 @@ const LotteryModule = buildModule("LotteryModule", (m) => {
       subscriptionId,
       lotteryContract,
     ]);
-    return { lotteryContract };
+    return { lotteryContract, VRFCoordinatorV2_5MockContract };
   } else {
     const { VRFCoordinator, keyHash } = chainlinkVRFSupportedNetworks.filter(
       (_) => _.chainId === currentNetwork
@@ -78,7 +78,7 @@ const LotteryModule = buildModule("LotteryModule", (m) => {
       }
     );
 
-    return { lotteryContract };
+    return { lotteryContract, VRFCoordinatorV2_5MockContract };
   }
 });
 

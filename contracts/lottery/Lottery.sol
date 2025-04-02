@@ -4,6 +4,18 @@ import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFCo
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 contract Lottery is VRFConsumerBaseV2Plus {
+    error NotEnoughFund();
+    error TicketsSoldOut();
+    error LotteryNotAllowed();
+    error RawLottery();
+
+    enum LotteryState {
+        INIT,
+        PROCESSING,
+        FINISHED
+    }
+    LotteryState s_state = LotteryState.INIT;
+
     address immutable i_owner;
     uint immutable i_prize;
     uint immutable i_numTickets;
@@ -16,17 +28,8 @@ contract Lottery is VRFConsumerBaseV2Plus {
     uint16 constant REQUEST_CONFIRMATIONS = 3;
     uint32 constant NUM_WORDS = 1;
     uint private immutable s_subscriptionId;
-
-    error NotEnoughFund();
-    error TicketsSoldOut();
-    error LotteryNotAllowed();
-
-    enum LotteryState {
-        INIT,
-        PROCESSING,
-        FINISHED
-    }
-    LotteryState s_state = LotteryState.INIT;
+    uint s_requestId;
+    event RandomWord(uint _word);
 
     constructor(
         address _owner,
@@ -54,6 +57,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
 
     function requestWinner() public returns (uint256 requestId) {
         if (s_state != LotteryState.INIT) revert LotteryNotAllowed();
+        s_state = LotteryState.PROCESSING;
         requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
@@ -66,7 +70,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
                 )
             })
         );
-        s_state = LotteryState.PROCESSING;
+        s_requestId = requestId;
     }
 
     function fulfillRandomWords(
@@ -75,6 +79,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
     ) internal override {
         s_winnerIndex = randomWords[0] % i_numTickets;
         s_state = LotteryState.FINISHED;
+        emit RandomWord(randomWords[0]);
     }
 
     function getOwner() external view returns (address) {
@@ -89,8 +94,20 @@ contract Lottery is VRFConsumerBaseV2Plus {
         return s_participants;
     }
 
-    function getWinner() external view returns (address) {
+    function getWinnerAddress() external view returns (address) {
+        if (s_state == LotteryState.INIT) revert RawLottery();
         if (s_state == LotteryState.PROCESSING) revert LotteryNotAllowed();
-        return s_participants[s_winnerIndex];
+        return
+            s_winnerIndex < s_participants.length
+                ? s_participants[s_winnerIndex]
+                : address(0);
+    }
+
+    function getRequestId() external view returns (uint) {
+        return s_requestId;
+    }
+
+    function getState() external view returns (LotteryState) {
+        return s_state;
     }
 }
