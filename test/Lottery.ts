@@ -2,13 +2,7 @@ import { ignition, viem } from "hardhat";
 import LotteryModule from "../ignition/modules/lottery/Lottery";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
-import {
-  getAddress,
-  isAddress,
-  parseEther,
-  parseEventLogs,
-  zeroAddress,
-} from "viem";
+import { getAddress, parseEther, parseEventLogs, zeroAddress } from "viem";
 
 describe("Lottery", function () {
   async function deployLotteryFixture() {
@@ -69,22 +63,22 @@ describe("Lottery", function () {
     });
   });
 
-  describe("Randomness", function () {
-    it("should ...", async function () {
-      const { VRFCoordinatorV2_5MockContract, lotteryContract, publicClient } =
-        await loadFixture(deployLotteryFixture);
+  describe("Request winner", function () {
+    it("should update lotter states while randomness is in progress", async function () {
+      const {
+        VRFCoordinatorV2_5MockContract,
+        lotteryContract,
+        publicClient,
+        numTickets,
+      } = await loadFixture(deployLotteryFixture);
 
-      await lotteryContract.write.purchaseTicket({
-        value: parseEther("0.001"),
-      });
-      await lotteryContract.write.purchaseTicket({
-        value: parseEther("0.001"),
-      });
-      await lotteryContract.write.purchaseTicket({
-        value: parseEther("0.001"),
-      });
+      for (let index = 0; index < numTickets; index++)
+        await lotteryContract.write.purchaseTicket({
+          value: parseEther("0.001"),
+        });
 
       expect(await lotteryContract.read.getState()).to.equal(0);
+
       await lotteryContract.write.requestWinner();
       expect(await lotteryContract.read.getState()).to.equal(1);
 
@@ -98,6 +92,22 @@ describe("Lottery", function () {
           requestId,
           lotteryContract.address,
         ]);
+      const receipt = await publicClient.getTransactionReceipt({
+        hash: txHash,
+      });
+      const winnerEvent = parseEventLogs({
+        abi: lotteryContract.abi,
+        logs: receipt.logs,
+        eventName: "Winner",
+      });
+      expect(await lotteryContract.read.getState()).to.equal(2);
+
+      expect(await lotteryContract.read.getWinnerAddress()).to.equal(
+        winnerEvent[0].args._address
+      );
+
+      await expect(lotteryContract.write.purchaseTicket()).to.be.rejectedWith();
+      await expect(lotteryContract.write.requestWinner()).to.be.rejectedWith();
     });
   });
 });

@@ -28,7 +28,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
     uint32 constant NUM_WORDS = 1;
     uint private immutable s_subscriptionId;
     uint s_requestId;
-    event WinnerIndex(uint _winnerIndex, address _winnerAddress);
+    event Winner(uint _index, address _address);
 
     constructor(
         address _owner,
@@ -89,8 +89,8 @@ contract Lottery is VRFConsumerBaseV2Plus {
                 ""
             );
             require(callSuccess, "Call failed");
-            emit WinnerIndex(_winnerIndex, winnerAddress);
-        } else emit WinnerIndex(_winnerIndex, address(0));
+            emit Winner(_winnerIndex, winnerAddress);
+        } else emit Winner(_winnerIndex, address(0));
     }
 
     function getWinnerAddress() external view returns (address) {
