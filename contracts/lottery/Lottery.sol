@@ -6,8 +6,7 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 contract Lottery is VRFConsumerBaseV2Plus {
     error NotEnoughFund();
     error TicketsSoldOut();
-    error LotteryNotAllowed();
-    error RawLottery();
+    error LotteryNotAvailable();
 
     enum LotteryState {
         INIT,
@@ -24,12 +23,12 @@ contract Lottery is VRFConsumerBaseV2Plus {
     uint s_winnerIndex;
 
     bytes32 immutable s_keyHash;
-    uint32 constant CALLBACK_GAS_LIMIT = 40000;
+    uint32 constant CALLBACK_GAS_LIMIT = 100000;
     uint16 constant REQUEST_CONFIRMATIONS = 3;
     uint32 constant NUM_WORDS = 1;
     uint private immutable s_subscriptionId;
     uint s_requestId;
-    event RandomWord(uint _word);
+    event WinnerIndex(uint _winnerIndex, address _winnerAddress);
 
     constructor(
         address _owner,
@@ -51,12 +50,12 @@ contract Lottery is VRFConsumerBaseV2Plus {
     function purchaseTicket() external payable {
         if (s_participants.length == i_numTickets) revert TicketsSoldOut();
         if (msg.value < i_ticketPrice) revert NotEnoughFund();
-        if (s_state != LotteryState.INIT) revert LotteryNotAllowed();
+        if (s_state != LotteryState.INIT) revert LotteryNotAvailable();
         s_participants.push(msg.sender);
     }
 
     function requestWinner() public returns (uint256 requestId) {
-        if (s_state != LotteryState.INIT) revert LotteryNotAllowed();
+        if (s_state != LotteryState.INIT) revert LotteryNotAvailable();
         s_state = LotteryState.PROCESSING;
         requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
@@ -79,11 +78,35 @@ contract Lottery is VRFConsumerBaseV2Plus {
     ) internal override {
         s_winnerIndex = randomWords[0] % i_numTickets;
         s_state = LotteryState.FINISHED;
-        emit RandomWord(randomWords[0]);
+        reward(s_winnerIndex);
+    }
+
+    function reward(uint _winnerIndex) internal {
+        address[] memory participants = s_participants;
+        if (_winnerIndex < participants.length) {
+            address winnerAddress = participants[_winnerIndex];
+            (bool callSuccess, ) = payable(winnerAddress).call{value: i_prize}(
+                ""
+            );
+            require(callSuccess, "Call failed");
+            emit WinnerIndex(_winnerIndex, winnerAddress);
+        } else emit WinnerIndex(_winnerIndex, address(0));
+    }
+
+    function getWinnerAddress() external view returns (address) {
+        return
+            s_state == LotteryState.FINISHED &&
+                s_winnerIndex < s_participants.length
+                ? s_participants[s_winnerIndex]
+                : address(0);
     }
 
     function getOwner() external view returns (address) {
         return i_owner;
+    }
+
+    function getNumTickets() external view returns (uint) {
+        return i_numTickets;
     }
 
     function getPrize() external view returns (uint) {
@@ -94,20 +117,11 @@ contract Lottery is VRFConsumerBaseV2Plus {
         return s_participants;
     }
 
-    function getWinnerAddress() external view returns (address) {
-        if (s_state == LotteryState.INIT) revert RawLottery();
-        if (s_state == LotteryState.PROCESSING) revert LotteryNotAllowed();
-        return
-            s_winnerIndex < s_participants.length
-                ? s_participants[s_winnerIndex]
-                : address(0);
+    function getState() external view returns (LotteryState) {
+        return s_state;
     }
 
     function getRequestId() external view returns (uint) {
         return s_requestId;
-    }
-
-    function getState() external view returns (LotteryState) {
-        return s_state;
     }
 }

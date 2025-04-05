@@ -2,13 +2,19 @@ import { ignition, viem } from "hardhat";
 import LotteryModule from "../ignition/modules/lottery/Lottery";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
-import { getAddress, parseEther } from "viem";
+import {
+  getAddress,
+  isAddress,
+  parseEther,
+  parseEventLogs,
+  zeroAddress,
+} from "viem";
 
 describe("Lottery", function () {
   async function deployLotteryFixture() {
     const [owner] = await viem.getWalletClients();
     const prize = parseEther("0.005");
-    const numTickets = 5;
+    const numTickets = 3;
     const publicClient = await viem.getPublicClient();
     const { lotteryContract, VRFCoordinatorV2_5MockContract } =
       await ignition.deploy(LotteryModule, {
@@ -64,8 +70,8 @@ describe("Lottery", function () {
   });
 
   describe("Randomness", function () {
-    it("shouldl ...", async function () {
-      const { VRFCoordinatorV2_5MockContract, lotteryContract, numTickets } =
+    it("should ...", async function () {
+      const { VRFCoordinatorV2_5MockContract, lotteryContract, publicClient } =
         await loadFixture(deployLotteryFixture);
 
       await lotteryContract.write.purchaseTicket({
@@ -78,18 +84,20 @@ describe("Lottery", function () {
         value: parseEther("0.001"),
       });
 
+      expect(await lotteryContract.read.getState()).to.equal(0);
       await lotteryContract.write.requestWinner();
+      expect(await lotteryContract.read.getState()).to.equal(1);
+
+      const defaultWinnerAddress =
+        await lotteryContract.read.getWinnerAddress();
+      expect(defaultWinnerAddress).to.equal(zeroAddress);
 
       const requestId = await lotteryContract.read.getRequestId();
-      await VRFCoordinatorV2_5MockContract.write.fulfillRandomWords([
-        requestId,
-        lotteryContract.address,
-      ]);
-
-      const randomWordEvent = await lotteryContract.getEvents.RandomWord();
-      const word = randomWordEvent[0].args._word;
-
-      const winnerAddress = await lotteryContract.read.getWinnerAddress();
+      const txHash =
+        await VRFCoordinatorV2_5MockContract.write.fulfillRandomWords([
+          requestId,
+          lotteryContract.address,
+        ]);
     });
   });
 });
