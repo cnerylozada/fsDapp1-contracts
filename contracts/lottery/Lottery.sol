@@ -2,8 +2,9 @@
 pragma solidity ^0.8.28;
 import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
 import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {AutomationCompatibleInterface} from "@chainlink/contracts/src/v0.8/automation/AutomationCompatible.sol";
 
-contract Lottery is VRFConsumerBaseV2Plus {
+contract Lottery is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     error NotEnoughFund();
     error TicketsSoldOut();
     error LotteryNotAvailable();
@@ -19,6 +20,8 @@ contract Lottery is VRFConsumerBaseV2Plus {
     uint immutable i_prize;
     uint immutable i_numTickets;
     uint immutable i_ticketPrice;
+    uint immutable i_dateInSeconds;
+
     address[] s_participants;
     uint s_winnerIndex;
 
@@ -32,6 +35,7 @@ contract Lottery is VRFConsumerBaseV2Plus {
 
     constructor(
         address _owner,
+        uint _dateInSeconds,
         uint _numTickets,
         uint _ticketPrice,
         address _vrfCoordinator,
@@ -39,25 +43,36 @@ contract Lottery is VRFConsumerBaseV2Plus {
         bytes32 _keyHash
     ) payable VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_owner = _owner;
-        i_prize = msg.value;
+        i_dateInSeconds = block.timestamp + _dateInSeconds;
         i_numTickets = _numTickets;
         i_ticketPrice = _ticketPrice;
+        i_prize = msg.value;
 
         s_subscriptionId = _subscriptionId;
         s_keyHash = _keyHash;
     }
 
-    function purchaseTicket() external payable {
-        if (s_participants.length == i_numTickets) revert TicketsSoldOut();
-        if (msg.value < i_ticketPrice) revert NotEnoughFund();
-        if (s_state != LotteryState.INIT) revert LotteryNotAvailable();
-        s_participants.push(msg.sender);
+    function checkUpkeep(
+        bytes calldata /* checkData */
+    )
+        public
+        view
+        override
+        returns (bool upkeepNeeded, bytes memory /* performData */)
+    {
+        bool isInitialState = s_state == LotteryState.INIT;
+        upkeepNeeded = isInitialState && block.timestamp > i_dateInSeconds;
     }
 
-    function requestWinner() public returns (uint256 requestId) {
-        if (s_state != LotteryState.INIT) revert LotteryNotAvailable();
+    function performUpkeep(bytes calldata /* performData */) external override {
+        LotteryState state = s_state;
+        bool isInitialState = state == LotteryState.INIT;
+        bool upkeepNeeded = isInitialState && block.timestamp > i_dateInSeconds;
+        if (!upkeepNeeded) revert();
+
+        if (state != LotteryState.INIT) revert LotteryNotAvailable();
         s_state = LotteryState.PROCESSING;
-        requestId = s_vrfCoordinator.requestRandomWords(
+        uint requestId = s_vrfCoordinator.requestRandomWords(
             VRFV2PlusClient.RandomWordsRequest({
                 keyHash: s_keyHash,
                 subId: s_subscriptionId,
@@ -70,6 +85,13 @@ contract Lottery is VRFConsumerBaseV2Plus {
             })
         );
         s_requestId = requestId;
+    }
+
+    function purchaseTicket() external payable {
+        if (s_participants.length == i_numTickets) revert TicketsSoldOut();
+        if (msg.value < i_ticketPrice) revert NotEnoughFund();
+        if (s_state != LotteryState.INIT) revert LotteryNotAvailable();
+        s_participants.push(msg.sender);
     }
 
     function fulfillRandomWords(

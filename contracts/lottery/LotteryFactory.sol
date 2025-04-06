@@ -3,21 +3,22 @@ pragma solidity ^0.8.28;
 import {Lottery} from "./Lottery.sol";
 
 contract LotteryFactory {
-    event NewLottery(
-        address _owner,
-        address indexed _address,
-        uint _createdAt,
-        string _title,
-        uint _prize,
-        string _description,
-        uint _numTickets,
-        uint _ticketPrice
-    );
+    struct Detail {
+        string _title;
+        string _description;
+        address _owner;
+        uint _dateInSeconds;
+        uint _numTickets;
+        uint _ticketPrice;
+        uint _prize;
+    }
+    event NewLottery(address indexed _address, uint _createdAt, Detail _detail);
 
     function createLottery(
         string memory _title,
         string memory _description,
         uint _numTickets,
+        uint _dateInSeconds,
         uint _ticketPrice,
         address _vrfCoordinator,
         uint _subscriptionId,
@@ -25,8 +26,10 @@ contract LotteryFactory {
     ) external payable {
         uint prize = msg.value;
         address owner = msg.sender;
+
         Lottery newLottery = new Lottery{value: prize}(
             owner,
+            _dateInSeconds,
             _numTickets,
             _ticketPrice,
             _vrfCoordinator,
@@ -35,15 +38,15 @@ contract LotteryFactory {
         );
         address contractAddress = address(newLottery);
 
-        emit NewLottery(
-            owner,
-            contractAddress,
-            block.timestamp,
-            _title,
-            prize,
-            _description,
-            _numTickets,
-            _ticketPrice
-        );
+        Detail memory detail = Detail({
+            _title: _title,
+            _description: _description,
+            _owner: owner,
+            _dateInSeconds: _dateInSeconds,
+            _numTickets: _numTickets,
+            _ticketPrice: _ticketPrice,
+            _prize: prize
+        });
+        emit NewLottery(contractAddress, block.timestamp, detail);
     }
 }

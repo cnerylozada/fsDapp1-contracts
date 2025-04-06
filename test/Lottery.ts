@@ -1,6 +1,9 @@
 import { ignition, viem } from "hardhat";
 import LotteryModule from "../ignition/modules/lottery/Lottery";
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
+import {
+  loadFixture,
+  time,
+} from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import { getAddress, parseEther, parseEventLogs, zeroAddress } from "viem";
 
@@ -9,6 +12,7 @@ describe("Lottery", function () {
     const [owner] = await viem.getWalletClients();
     const prize = parseEther("0.005");
     const numTickets = 3;
+    const dateInSeconds = 5 * 60;
     const publicClient = await viem.getPublicClient();
     const { lotteryContract, VRFCoordinatorV2_5MockContract } =
       await ignition.deploy(LotteryModule, {
@@ -16,6 +20,7 @@ describe("Lottery", function () {
           LotteryModule: {
             mainDeployer: owner.account.address,
             numTickets,
+            dateInSeconds,
             prize,
           },
         },
@@ -28,6 +33,7 @@ describe("Lottery", function () {
       owner,
       prize,
       numTickets,
+      dateInSeconds,
     };
   }
   describe("Deployment", async function () {
@@ -70,6 +76,7 @@ describe("Lottery", function () {
         lotteryContract,
         publicClient,
         numTickets,
+        dateInSeconds,
       } = await loadFixture(deployLotteryFixture);
 
       for (let index = 0; index < numTickets; index++)
@@ -79,7 +86,10 @@ describe("Lottery", function () {
 
       expect(await lotteryContract.read.getState()).to.equal(0);
 
-      await lotteryContract.write.requestWinner();
+      const unlockTime = BigInt((await time.latest()) + dateInSeconds);
+
+      await time.increaseTo(unlockTime);
+      await lotteryContract.write.performUpkeep(["0x"]);
       expect(await lotteryContract.read.getState()).to.equal(1);
 
       const defaultWinnerAddress =
@@ -107,7 +117,9 @@ describe("Lottery", function () {
       );
 
       await expect(lotteryContract.write.purchaseTicket()).to.be.rejectedWith();
-      await expect(lotteryContract.write.requestWinner()).to.be.rejectedWith();
+      await expect(
+        lotteryContract.write.performUpkeep(["0x"])
+      ).to.be.rejectedWith();
     });
   });
 });
