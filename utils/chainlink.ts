@@ -44,6 +44,19 @@ export const chainlinkVRFSupportedNetworks = [
   },
 ];
 
+export const chainlinkAutomationSupportedNetworks = [
+  {
+    chainId: CHAINID.SEPOLIA,
+    LINKToken: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
+    registrarAddress: "0xb0E49c5D0d05cbc241d68c05BC5BA1d1B7B72976",
+  },
+  {
+    chainId: CHAINID.OPTIMISMSEPOLIA,
+    LINKToken: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+    registrarAddress: "0x110Bd89F0B62EA1598FfeBF8C0304c9e58510Ee5",
+  },
+];
+
 export const chainlinkVRFSubscriptions = [
   {
     chainId: CHAINID.SEPOLIA,
