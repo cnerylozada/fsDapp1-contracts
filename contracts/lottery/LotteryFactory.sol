@@ -7,7 +7,7 @@ contract LotteryFactory {
         string _title;
         string _description;
         address _owner;
-        uint _dateInSeconds;
+        uint _eventDate;
         uint _numTickets;
         uint _ticketPrice;
         uint _prize;
@@ -17,8 +17,9 @@ contract LotteryFactory {
     function createLottery(
         string memory _title,
         string memory _description,
+        uint _eventDate,
+        uint _secondsToEvent,
         uint _numTickets,
-        uint _dateInSeconds,
         uint _ticketPrice,
         address _vrfCoordinator,
         uint _subscriptionId,
@@ -29,7 +30,7 @@ contract LotteryFactory {
 
         Lottery newLottery = new Lottery{value: prize}(
             owner,
-            _dateInSeconds,
+            _secondsToEvent,
             _numTickets,
             _ticketPrice,
             _vrfCoordinator,
@@ -42,7 +43,7 @@ contract LotteryFactory {
             _title: _title,
             _description: _description,
             _owner: owner,
-            _dateInSeconds: _dateInSeconds,
+            _eventDate: _eventDate,
             _numTickets: _numTickets,
             _ticketPrice: _ticketPrice,
             _prize: prize

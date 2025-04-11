@@ -20,7 +20,7 @@ contract Lottery is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     uint immutable i_prize;
     uint immutable i_numTickets;
     uint immutable i_ticketPrice;
-    uint immutable i_dateInSeconds;
+    uint immutable i_secondsToEvent;
 
     address[] s_participants;
     uint s_winnerIndex;
@@ -35,7 +35,7 @@ contract Lottery is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
 
     constructor(
         address _owner,
-        uint _dateInSeconds,
+        uint _secondsToEvent,
         uint _numTickets,
         uint _ticketPrice,
         address _vrfCoordinator,
@@ -43,7 +43,7 @@ contract Lottery is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         bytes32 _keyHash
     ) payable VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_owner = _owner;
-        i_dateInSeconds = block.timestamp + _dateInSeconds;
+        i_secondsToEvent = block.timestamp + _secondsToEvent;
         i_numTickets = _numTickets;
         i_ticketPrice = _ticketPrice;
         i_prize = msg.value;
@@ -61,13 +61,14 @@ contract Lottery is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
         returns (bool upkeepNeeded, bytes memory /* performData */)
     {
         bool isInitialState = s_state == LotteryState.INIT;
-        upkeepNeeded = isInitialState && block.timestamp > i_dateInSeconds;
+        upkeepNeeded = isInitialState && block.timestamp > i_secondsToEvent;
     }
 
     function performUpkeep(bytes calldata /* performData */) external override {
         LotteryState state = s_state;
         bool isInitialState = state == LotteryState.INIT;
-        bool upkeepNeeded = isInitialState && block.timestamp > i_dateInSeconds;
+        bool upkeepNeeded = isInitialState &&
+            block.timestamp > i_secondsToEvent;
         if (!upkeepNeeded) revert();
 
         if (state != LotteryState.INIT) revert LotteryNotAvailable();

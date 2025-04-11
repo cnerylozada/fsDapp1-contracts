@@ -12,7 +12,7 @@ describe("Lottery", function () {
     const [owner] = await viem.getWalletClients();
     const prize = parseEther("0.005");
     const numTickets = 3;
-    const dateInSeconds = 5 * 60;
+    const secondsToEvent = 5 * 60;
     const publicClient = await viem.getPublicClient();
     const { lotteryContract, VRFCoordinatorV2_5MockContract } =
       await ignition.deploy(LotteryModule, {
@@ -20,7 +20,7 @@ describe("Lottery", function () {
           LotteryModule: {
             mainDeployer: owner.account.address,
             numTickets,
-            dateInSeconds,
+            secondsToEvent,
             prize,
           },
         },
@@ -33,7 +33,7 @@ describe("Lottery", function () {
       owner,
       prize,
       numTickets,
-      dateInSeconds,
+      secondsToEvent,
     };
   }
   describe("Deployment", async function () {
@@ -76,7 +76,7 @@ describe("Lottery", function () {
         lotteryContract,
         publicClient,
         numTickets,
-        dateInSeconds,
+        secondsToEvent,
       } = await loadFixture(deployLotteryFixture);
 
       for (let index = 0; index < numTickets; index++)
@@ -86,7 +86,7 @@ describe("Lottery", function () {
 
       expect(await lotteryContract.read.getState()).to.equal(0);
 
-      const unlockTime = BigInt((await time.latest()) + dateInSeconds);
+      const unlockTime = BigInt((await time.latest()) + secondsToEvent);
 
       await time.increaseTo(unlockTime);
       await lotteryContract.write.performUpkeep(["0x"]);
