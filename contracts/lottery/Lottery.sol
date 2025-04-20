@@ -147,4 +147,8 @@ contract Lottery is VRFConsumerBaseV2Plus, AutomationCompatibleInterface {
     function getRequestId() external view returns (uint) {
         return s_requestId;
     }
+
+    function getTicketPrice() external view returns (uint) {
+        return i_ticketPrice;
+    }
 }
