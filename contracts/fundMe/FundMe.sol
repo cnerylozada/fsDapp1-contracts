@@ -28,7 +28,13 @@ contract FundMe {
         s_dataFeed = AggregatorV3Interface(_priceFeedAddress);
     }
 
-    event NewFunder(address _address, uint _amount, uint _createdAt);
+    struct Funder {
+        address walletAddress;
+        uint amount;
+        uint createdAt;
+    }
+    event NewFunder(Funder funder);
+    Funder[] s_funders;
 
     function fund() external payable {
         uint fundToUSD = msg.value.convertETHToUSD(
@@ -36,7 +42,18 @@ contract FundMe {
             s_priceFeedDecimals
         );
         if (fundToUSD < MIN_AMOUNT_IN_USD) revert FundMe_NotEnoughFunds();
-        emit NewFunder(msg.sender, msg.value, block.timestamp);
+
+        Funder memory funder = Funder({
+            walletAddress: msg.sender,
+            amount: msg.value,
+            createdAt: block.timestamp
+        });
+        emit NewFunder(funder);
+        s_funders.push(funder);
+    }
+
+    function getFunders() external view returns (Funder[] memory) {
+        return s_funders;
     }
 
     function getMinAmountInUSD() external view returns (uint) {
