@@ -42,13 +42,20 @@ export const chainlinkVRFSupportedNetworks = [
       "0xc3d5bc4d5600fa71f7a50b9ad841f14f24f9ca4236fd00bdb5fda56b052b28a4",
     LINKToken: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
   },
+  {
+    chainId: CHAINID.ARBITRUMSEPOLIA,
+    VRFCoordinator: "0x5CE8D5A2BC84beb22a398CCA51996F7930313D61",
+    keyHash:
+      "0x1770bdc7eec7771f7ba4ffd640f34260d7f095b79c92d34a5b2551d6f6cfd2be",
+    LINKToken: "0xb1D4538B4571d411F07960EF2838Ce337FE1E80E",
+  },
 ];
 
 export const chainlinkAutomationSupportedNetworks = [
   {
-    chainId: CHAINID.SEPOLIA,
-    LINKToken: "0x779877A7B0D9E8603169DdbD7836e478b4624789",
-    registrarAddress: "0xb0E49c5D0d05cbc241d68c05BC5BA1d1B7B72976",
+    chainId: CHAINID.ARBITRUMSEPOLIA,
+    LINKToken: "0xb1D4538B4571d411F07960EF2838Ce337FE1E80E",
+    registrarAddress: "0x881918E24290084409DaA91979A30e6f0dB52eBe",
   },
   {
     chainId: CHAINID.OPTIMISMSEPOLIA,

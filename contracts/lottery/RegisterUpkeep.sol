@@ -39,9 +39,10 @@ contract RegisterUpkeep {
 
     function registerAndPredictID(
         string memory _name,
-        address _contractAddress
+        address _contractAddress,
+        uint _linksToSend
     ) external {
-        uint96 LINK_TO_SEND = 1 * (10 ** 18);
+        uint96 LINKS_TO_SEND = uint96(_linksToSend);
 
         RegistrationParams memory params = RegistrationParams({
             name: _name,
@@ -53,7 +54,7 @@ contract RegisterUpkeep {
             checkData: "",
             triggerConfig: "",
             offchainConfig: "",
-            amount: LINK_TO_SEND
+            amount: LINKS_TO_SEND
         });
         i_link.approve(address(i_registrar), params.amount);
 

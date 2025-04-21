@@ -3,16 +3,26 @@ pragma solidity ^0.8.28;
 import {Lottery} from "./Lottery.sol";
 
 contract LotteryFactory {
-    struct Detail {
-        string _title;
-        string _description;
-        address _owner;
-        uint _eventDate;
-        uint _numTickets;
-        uint _ticketPrice;
-        uint _prize;
+    struct BaseMetadata {
+        string title;
+        string description;
+        address owner;
+        uint eventDate;
+        uint numTickets;
+        uint ticketPrice;
+        uint prize;
     }
-    event NewLottery(address indexed _address, uint _createdAt, Detail _detail);
+    event NewLottery(
+        address indexed contractAddress,
+        uint createdAt,
+        BaseMetadata metadata
+    );
+    struct Metadata {
+        address contractAddress;
+        uint createdAt;
+        BaseMetadata metadata;
+    }
+    Metadata[] s_contractsCreated;
 
     function createLottery(
         string memory _title,
@@ -39,15 +49,27 @@ contract LotteryFactory {
         );
         address contractAddress = address(newLottery);
 
-        Detail memory detail = Detail({
-            _title: _title,
-            _description: _description,
-            _owner: owner,
-            _eventDate: _eventDate,
-            _numTickets: _numTickets,
-            _ticketPrice: _ticketPrice,
-            _prize: prize
+        BaseMetadata memory baseMetadata = BaseMetadata({
+            title: _title,
+            description: _description,
+            owner: owner,
+            eventDate: _eventDate,
+            numTickets: _numTickets,
+            ticketPrice: _ticketPrice,
+            prize: prize
         });
-        emit NewLottery(contractAddress, block.timestamp, detail);
+        uint createdAt = block.timestamp;
+        emit NewLottery(contractAddress, createdAt, baseMetadata);
+        s_contractsCreated.push(
+            Metadata({
+                contractAddress: contractAddress,
+                createdAt: createdAt,
+                metadata: baseMetadata
+            })
+        );
+    }
+
+    function contractsCreated() external view returns (Metadata[] memory) {
+        return s_contractsCreated;
     }
 }

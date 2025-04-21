@@ -20,7 +20,7 @@ contract FundMeFactory {
         uint createdAt;
         BaseMetadata metadata;
     }
-    Metadata[] s_newCrowdFunding;
+    Metadata[] s_contractsCreated;
 
     function createNewCrowdFunding(
         string calldata _title,
@@ -45,7 +45,7 @@ contract FundMeFactory {
             priceFeedDecimals: _priceFeedDecimals
         });
         emit NewCrowdFunding(contractAddress, createdAt, baseMetadata);
-        s_newCrowdFunding.push(
+        s_contractsCreated.push(
             Metadata({
                 contractAddress: contractAddress,
                 createdAt: createdAt,
@@ -55,6 +55,6 @@ contract FundMeFactory {
     }
 
     function contractsCreated() external view returns (Metadata[] memory) {
-        return s_newCrowdFunding;
+        return s_contractsCreated;
     }
 }
