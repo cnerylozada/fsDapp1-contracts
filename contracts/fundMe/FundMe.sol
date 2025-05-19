@@ -68,6 +68,12 @@ contract FundMe {
         return address(this).balance;
     }
 
+    function getPriceFeed() external view returns (uint) {
+        return
+            Utils.getChainlinkDataFeedLatestAnswer(s_dataFeed) /
+            10 ** uint(s_priceFeedDecimals);
+    }
+
     function getOwner() external view returns (address) {
         return s_owner;
     }
