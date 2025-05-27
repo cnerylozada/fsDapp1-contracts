@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 import {Utils} from "./Utils.sol";
 
-contract Storage {
+contract Classroom {
     string private s_course;
     Utils.Student[] private s_students;
     uint s_creationDate;

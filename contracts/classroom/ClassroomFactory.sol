@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.28;
-import {Storage} from "./Storage.sol";
+import {Classroom} from "./Classroom.sol";
 
-contract StorageFactory {
+contract ClassroomFactory {
     event NewContractCreated(address contractAddress, string course);
     struct Medatada {
         address contractAddress;
@@ -10,9 +10,9 @@ contract StorageFactory {
     }
     Medatada[] s_newContractCreated;
 
-    function createStorage(string calldata _course) external {
-        Storage storageContract = new Storage(_course);
-        address newAddress = address(storageContract);
+    function createClassroom(string calldata _course) external {
+        Classroom classroomContract = new Classroom(_course);
+        address newAddress = address(classroomContract);
         emit NewContractCreated(newAddress, _course);
 
         s_newContractCreated.push(
