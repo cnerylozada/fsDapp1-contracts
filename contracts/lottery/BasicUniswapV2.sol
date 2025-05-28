@@ -19,6 +19,16 @@ contract BasicUniswapV2 {
         s_weth = IWETH(WETH);
     }
 
+    function getETHToLINKPriceFeed() external view returns (uint) {
+        address[] memory path;
+        path = new address[](2);
+        path[0] = WETH;
+        path[1] = LINK;
+        uint ONE_ETH = 1;
+        uint[] memory amountsOut = router.getAmountsOut(ONE_ETH, path);
+        return amountsOut[1];
+    }
+
     function swapETHForLINK() external payable returns (uint256 amountOut) {
         uint256 amountIn = msg.value;
         if (amountIn == 0) revert NotEnoughFunds();

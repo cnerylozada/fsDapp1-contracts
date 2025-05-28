@@ -9,6 +9,7 @@ contract ClassroomFactory {
         string course;
     }
     Medatada[] s_newContractCreated;
+    mapping(address => string) s_addressToSessionId;
 
     function createClassroom(string calldata _course) external {
         Classroom classroomContract = new Classroom(_course);
@@ -22,5 +23,18 @@ contract ClassroomFactory {
 
     function contractsCreated() external view returns (Medatada[] memory) {
         return s_newContractCreated;
+    }
+
+    function assingSessionIdToWalletAddress(
+        address _walletAddress,
+        string memory _sessionId
+    ) external {
+        s_addressToSessionId[_walletAddress] = _sessionId;
+    }
+
+    function getSessionIdByWalletAddress(
+        address _walletAddress
+    ) external view returns (string memory) {
+        return s_addressToSessionId[_walletAddress];
     }
 }
