@@ -32,6 +32,7 @@ contract FundMe {
         address walletAddress;
         uint amount;
         uint createdAt;
+        bool wasItWithdrawn;
     }
     event NewFunder(Funder funder);
     Funder[] s_funders;
@@ -46,7 +47,8 @@ contract FundMe {
         Funder memory funder = Funder({
             walletAddress: msg.sender,
             amount: msg.value,
-            createdAt: block.timestamp
+            createdAt: block.timestamp,
+            wasItWithdrawn: false
         });
         emit NewFunder(funder);
         s_funders.push(funder);
@@ -86,6 +88,10 @@ contract FundMe {
     function withdraw() external onlyOwner {
         uint contractBalance = address(this).balance;
         (bool sent, ) = payable(s_owner).call{value: contractBalance}("");
-        require(sent, "Failed to send funds");
+        if (!sent) revert();
+
+        for (uint i = 0; i < s_funders.length; i++)
+            if (!s_funders[i].wasItWithdrawn)
+                s_funders[i].wasItWithdrawn = true;
     }
 }
