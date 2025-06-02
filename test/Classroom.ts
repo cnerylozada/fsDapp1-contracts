@@ -7,8 +7,10 @@ describe("Classroom", function () {
   async function deployClassroomContract() {
     const [owner, addr1] = await viem.getWalletClients();
     const _course = "test_course";
+    const _createdAt = 1748882008;
+
     const { classroomContract } = await ignition.deploy(ClassroomModule, {
-      parameters: { ClassroomModule: { _course } },
+      parameters: { ClassroomModule: { _course, _createdAt } },
     });
     return {
       _course,

@@ -10,17 +10,12 @@ contract FundMeFactory {
         address priceFeedAddress;
         int priceFeedDecimals;
     }
-    event NewCrowdFunding(
-        address indexed contractAddress,
-        uint createdAt,
-        BaseMetadata metadata
-    );
     struct Metadata {
         address contractAddress;
         uint createdAt;
         BaseMetadata metadata;
     }
-    Metadata[] s_contractsCreated;
+    Metadata[] s_createdContractList;
 
     function createNewCrowdFunding(
         string calldata _title,
@@ -44,8 +39,7 @@ contract FundMeFactory {
             priceFeedAddress: _priceFeedAddress,
             priceFeedDecimals: _priceFeedDecimals
         });
-        emit NewCrowdFunding(contractAddress, createdAt, baseMetadata);
-        s_contractsCreated.push(
+        s_createdContractList.push(
             Metadata({
                 contractAddress: contractAddress,
                 createdAt: createdAt,
@@ -54,7 +48,11 @@ contract FundMeFactory {
         );
     }
 
-    function contractsCreated() external view returns (Metadata[] memory) {
-        return s_contractsCreated;
+    function getCreatedContractList()
+        external
+        view
+        returns (Metadata[] memory)
+    {
+        return s_createdContractList;
     }
 }

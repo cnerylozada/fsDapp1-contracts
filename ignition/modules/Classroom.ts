@@ -10,7 +10,8 @@ const ClassroomModule = buildModule("ClassroomModule", (m) => {
     courseName = "science_opSepolia";
 
   const _course = m.getParameter("_course", courseName);
-  const classroomContract = m.contract("Classroom", [_course]);
+  const _createdAt = m.getParameter("_createdAt", 1748882008);
+  const classroomContract = m.contract("Classroom", [_course, _createdAt]);
   return { classroomContract };
 });
 

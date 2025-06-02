@@ -17,7 +17,7 @@ describe("ClassroomFactory", function () {
         deployClassroomFactoryContract
       );
       const initiallAddressList =
-        await classroomFactoryContract.read.contractsCreated();
+        await classroomFactoryContract.read.getCreatedContractList();
       expect(initiallAddressList.length).to.equal(0);
     });
   });
@@ -35,7 +35,7 @@ describe("ClassroomFactory", function () {
 
       const lastAddressAdded = newContractCreatedEvents[0].args.contractAddress;
       const addressList =
-        await classroomFactoryContract.read.contractsCreated();
+        await classroomFactoryContract.read.getCreatedContractList();
       expect(lastAddressAdded).to.equal(addressList[0].contractAddress);
     });
   });
@@ -50,7 +50,7 @@ describe("ClassroomFactory", function () {
       await classroomFactoryContract.write.createClassroom([_courseName]);
 
       const addressList =
-        await classroomFactoryContract.read.contractsCreated();
+        await classroomFactoryContract.read.getCreatedContractList();
       const lastAddressAdded = addressList[0].contractAddress;
       const classroomContract = await viem.getContractAt(
         "Classroom",

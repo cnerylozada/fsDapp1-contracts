@@ -5,11 +5,11 @@ import {Utils} from "./Utils.sol";
 contract Classroom {
     string private s_course;
     Utils.Student[] private s_students;
-    uint s_creationDate;
+    uint immutable i_creationDate;
 
-    constructor(string memory _course) {
+    constructor(string memory _course, uint _createdAt) {
         s_course = _course;
-        s_creationDate = block.timestamp;
+        i_creationDate = _createdAt;
     }
 
     event NewStudentAdded(string _name, Utils.StudentLevel _level);
@@ -27,7 +27,7 @@ contract Classroom {
     }
 
     function getMetadata() external view returns (string memory, uint) {
-        return (s_course, s_creationDate);
+        return (s_course, i_creationDate);
     }
 
     function getStudentByIndex(

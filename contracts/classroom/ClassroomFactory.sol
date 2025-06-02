@@ -6,23 +6,33 @@ contract ClassroomFactory {
     event NewContractCreated(address contractAddress, string course);
     struct Medatada {
         address contractAddress;
+        uint256 createdAt;
         string course;
     }
-    Medatada[] s_newContractCreated;
+    Medatada[] s_createdContractList;
     mapping(address => string) s_addressToSessionId;
 
     function createClassroom(string calldata _course) external {
-        Classroom classroomContract = new Classroom(_course);
+        uint createdAt = block.timestamp;
+        Classroom classroomContract = new Classroom(_course, createdAt);
         address newAddress = address(classroomContract);
         emit NewContractCreated(newAddress, _course);
 
-        s_newContractCreated.push(
-            Medatada({course: _course, contractAddress: newAddress})
+        s_createdContractList.push(
+            Medatada({
+                course: _course,
+                createdAt: createdAt,
+                contractAddress: newAddress
+            })
         );
     }
 
-    function contractsCreated() external view returns (Medatada[] memory) {
-        return s_newContractCreated;
+    function getCreatedContractList()
+        external
+        view
+        returns (Medatada[] memory)
+    {
+        return s_createdContractList;
     }
 
     function assingSessionIdToWalletAddress(
