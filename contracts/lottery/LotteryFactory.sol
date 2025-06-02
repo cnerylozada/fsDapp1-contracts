@@ -22,7 +22,7 @@ contract LotteryFactory {
         uint createdAt;
         BaseMetadata metadata;
     }
-    Metadata[] s_contractsCreated;
+    Metadata[] s_createdContractList;
 
     function createLottery(
         string memory _title,
@@ -60,7 +60,7 @@ contract LotteryFactory {
         });
         uint createdAt = block.timestamp;
         emit NewLottery(contractAddress, createdAt, baseMetadata);
-        s_contractsCreated.push(
+        s_createdContractList.push(
             Metadata({
                 contractAddress: contractAddress,
                 createdAt: createdAt,
@@ -69,7 +69,11 @@ contract LotteryFactory {
         );
     }
 
-    function contractsCreated() external view returns (Metadata[] memory) {
-        return s_contractsCreated;
+    function getCreatedContractList()
+        external
+        view
+        returns (Metadata[] memory)
+    {
+        return s_createdContractList;
     }
 }
